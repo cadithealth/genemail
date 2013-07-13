@@ -36,6 +36,23 @@ class Email(object):
   DEFAULTS = dict(
     structure = {
 
+      # TODO: is this the right structure for adding non-Content-ID attachments?...
+      #       (e.g. boarding-pass style appt sheet)
+
+      #  mail structure:
+      #
+      #     multipart/alternative
+      #     |-- text/plain
+      #     |-- multipart/related; type="text/html"
+      #     |   |-- text/html
+      #     |   `-- image/png... [attachments with "Content-ID"]
+      #     `-- application/octet-stream... [attachments without "Content-ID"]
+      #
+      #               Content-Type: image/png
+      #               Content-Transfer-Encoding: base64
+      #               Content-Location: file:///.../...
+      #               Content-ID: <ImageName>
+
       # 'mime:alternative': [
       #   'email:text',
       #   {'mime:related; type="text/html"': [
@@ -44,6 +61,8 @@ class Email(object):
       #     ]},
       #   {'mime:attachments': 'email:attachments; cid=False'},
       #   ]
+
+      # TODO: or is this the right structure?
 
       'mime:related': [
         {'mime:alternative': [
@@ -68,6 +87,7 @@ class Email(object):
     transferEncoding     = None,
     encoding             = None,
     boundary             = None,
+    minimalMime          = True,
     )
 
   #----------------------------------------------------------------------------
@@ -346,43 +366,6 @@ class Email(object):
         or 'application/octet-stream'
     return atts.values()
 
-  # #----------------------------------------------------------------------------
-  # def getMimeAttachments(self):
-
-  #   atts = self.getAttachments()
-
-  #   # TODO: these attachments have been geared toward inlined image
-  #   #       attachments... is this how standard attachments are sent as well?
-
-  #   ret = []
-  #   for adef in atts:
-  #     # todo: a lot more escaping might need to be done here... especially of
-  #     #       the attachment attributes...
-  #     name  = adef['name']
-  #     value = adef['value']
-  #     ctype = adef.get('content-type', None) \
-  #             or mimetypes.guess_type(name or '', False)[0] \
-  #             or 'application/octet-stream'
-  #     maintype, subtype = ctype.split('/', 1)
-  #     if maintype == 'text':
-  #       # Note: we should handle calculating the charset
-  #       att = email.MIMEText.MIMEText(value, _subtype=subtype)
-  #     elif maintype == 'image':
-  #       att = email.MIMEImage.MIMEImage(value, _subtype=subtype, name=name)
-  #     elif maintype == 'audio':
-  #       att = email.MIMEAudio.MIMEAudio(value, _subtype=subtype)
-  #     else:
-  #       att = email.MIMEBase.MIMEBase(maintype, subtype)
-  #       att.set_payload(value)
-  #       email.Encoders.encode_base64(att)
-  #     if adef.get('cid', False):
-  #       att.add_header('Content-Disposition', 'attachment')
-  #       att.add_header('Content-ID', '<' + name + '>')
-  #     else:
-  #       att.add_header('Content-Disposition', 'attachment', filename=name)
-  #     ret.append(att)
-  #   return ret
-
   #----------------------------------------------------------------------------
   def getOutputHeaders(self):
     curheaders = idict()
@@ -391,9 +374,9 @@ class Email(object):
     defaultHeaders = {
       'Subject':     lambda: self.getSubject(),
       }
-    for name, call in defaultHeaders.items():
+    for name, func in defaultHeaders.items():
       if name not in curheaders:
-        curheaders[name] = call()
+        curheaders[name] = func()
     if hasattr(self.manager, 'updateHeaders'):
       self.manager.updateHeaders(self, curheaders)
     return curheaders
@@ -408,43 +391,6 @@ class Email(object):
 
   #----------------------------------------------------------------------------
   def _getSmtpData(self, curheaders):
-
-    # TODO: is this the right structure for adding non-Content-ID attachments?...
-    #       (e.g. boarding-pass style appt sheet)
-
-    #  mail structure:
-    #
-    #     multipart/alternative
-    #     |-- text/plain
-    #     |-- multipart/related; type="text/html"
-    #     |   |-- text/html
-    #     |   `-- image/png... [attachments with "Content-ID"]
-    #     `-- application/octet-stream... [attachments without "Content-ID"]
-    #
-    #               Content-Type: image/png
-    #               Content-Transfer-Encoding: base64
-    #               Content-Location: file:///.../...
-    #               Content-ID: <ImageName>
-
-    # 'mime:related': [
-    #   {'mime:alternative': [
-    #     {'mime:related': [
-    #       'email:html',
-    #       {'mime:attachments': 'email:attachments[@cid]'},
-    #       ]},
-    #     'email:text',
-    #     ]},
-    #   {'mime:attachments': 'email:attachments[!@cid]'},
-    #   ]
-
-    # 'mime:alternative': [
-    #   'email:text',
-    #   {'mime:related; type="text/html"': [
-    #     'email:html',
-    #     {'mime:attachments': 'email:attachments[@cid]'},
-    #     ]},
-    #   {'mime:attachments': 'email:attachments[!@cid]'},
-    #   ]
 
     curheaders = idict(curheaders)
 
@@ -540,13 +486,25 @@ class Email(object):
     def make_mime_alternative(spec):
       comp = email.MIMEMultipart.MIMEMultipart(
         'alternative', boundary=make_boundary('alt'))
-      return funcs.comp_extend(comp, spec)
+      comp = funcs.comp_extend(comp, spec)
+      if self.minimalMime:
+        load = comp.get_payload()
+        if not isinstance(load, basestring) \
+            and len(load) == 1:
+          return load[0]
+      return comp
     funcs.make_mime_alternative = make_mime_alternative
 
     def make_mime_related(spec, type=None):
       comp = email.MIMEMultipart.MIMEMultipart(
         'related', boundary=make_boundary('rel'))
-      return funcs.comp_extend(comp, spec)
+      comp = funcs.comp_extend(comp, spec)
+      if self.minimalMime:
+        load = comp.get_payload()
+        if not isinstance(load, basestring) \
+            and len(load) == 1:
+          return load[0]
+      return comp
     funcs.make_mime_related = make_mime_related
 
     def make_mime_attachments(spec):

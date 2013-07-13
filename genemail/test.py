@@ -422,17 +422,13 @@ Subject: This Is A Test\n\n''' + tchk
     regex = re.compile('.*<email:attachment[^>]*>([^<]*)</email:attachment>.*', re.DOTALL)
 
     chk = '''\
-Content-Type: multipart/related; boundary="==genemail.test-rel-1=="
+Content-Type: multipart/alternative; boundary="==genemail.test-alt-2=="
 MIME-Version: 1.0
 Date: Fri, 13 Feb 2009 23:31:30 -0000
 To: test@example.com
 Message-ID: <1234567890@genemail.example.com>
 From: noreply@example.com
 Subject: This And That
-
---==genemail.test-rel-1==
-Content-Type: multipart/alternative; boundary="==genemail.test-alt-2=="
-MIME-Version: 1.0
 
 --==genemail.test-alt-2==
 MIME-Version: 1.0
@@ -473,7 +469,6 @@ Content-ID: <smiley.png>
 ''' + regex.sub('\\1', tpl).replace('   ','').strip() + '''
 --==genemail.test-rel-3==--
 --==genemail.test-alt-2==--
---==genemail.test-rel-1==--
 '''
 
     eml = Manager(sender=StoredSender(), provider=template(tpl)).newEmail()
@@ -552,17 +547,13 @@ Content-ID: <smiley.png>
 
     # ensure that the 'bcc' headers is stripped out of the output
     chk = '''\
-Content-Type: multipart/related; boundary="==genemail.test-rel-1=="
+Content-Type: multipart/alternative; boundary="==genemail.test-alt-2=="
 MIME-Version: 1.0
 From: mailfrom@example.com
 To: rcpt@example.com
 Date: Fri, 13 Feb 2009 23:31:30 -0000
 Message-ID: <1234567890@@genemail.example.com>
 Subject: Test
-
---==genemail.test-rel-1==
-Content-Type: multipart/alternative; boundary="==genemail.test-alt-2=="
-MIME-Version: 1.0
 
 --==genemail.test-alt-2==
 MIME-Version: 1.0
@@ -573,10 +564,6 @@ test.
 
 
 --==genemail.test-alt-2==
-Content-Type: multipart/related; boundary="==genemail.test-rel-3=="
-MIME-Version: 1.0
-
---==genemail.test-rel-3==
 MIME-Version: 1.0
 Content-Type: text/html; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -590,9 +577,7 @@ Content-Transfer-Encoding: 7bit
   </body>
 </html>
 
---==genemail.test-rel-3==--
 --==genemail.test-alt-2==--
---==genemail.test-rel-1==--
 '''
     self.assertMultiLineEqual(wsstrip(chk), wsstrip(out['message']))
 
