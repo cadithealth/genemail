@@ -582,6 +582,84 @@ Content-Transfer-Encoding: 7bit
     self.assertMultiLineEqual(wsstrip(chk), wsstrip(out['message']))
 
   #----------------------------------------------------------------------------
+  def test_noMinimalMime(self):
+    tpl = '''\
+<html
+ lang="en"
+ xml:lang="en"
+ xmlns="http://www.w3.org/1999/xhtml"
+ xmlns:email="http://pythonhosted.org/genemail/xmlns/1.0"
+ >
+ <head>
+  <title email:subject="content">${message.title()}</title>
+  <email:header name="to">rcpt@example.com</email:header>
+  <email:header name="from">mailfrom@example.com</email:header>
+ </head>
+ <body><p>${message}.</p></body>
+</html>
+'''
+    manager = Manager(sender=StoredSender(), provider=template(tpl))
+    manager.default.minimalMime = False
+    eml = manager.newEmail()
+    eml['message'] = 'test'
+    eml.setHeader('BcC', 'bcc@example.com')
+    # override the UNpredictable generated info...
+    eml.setHeader('date', 'Fri, 13 Feb 2009 23:31:30 -0000')
+    eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
+    eml.boundary = 'genemail.test'
+    eml.send()
+    self.assertEqual(1, len(manager.sender.emails))
+    out = manager.sender.emails[0]
+    self.assertEqual(sorted(['mailfrom', 'recipients', 'message']), sorted(out.keys()))
+    self.assertEqual('mailfrom@example.com', out['mailfrom'])
+    self.assertEqual(sorted(['rcpt@example.com', 'bcc@example.com']), sorted(out['recipients']))
+    chk = '''\
+Content-Type: multipart/related; boundary="==genemail.test-rel-1=="
+MIME-Version: 1.0
+From: mailfrom@example.com
+To: rcpt@example.com
+Date: Fri, 13 Feb 2009 23:31:30 -0000
+Message-ID: <1234567890@@genemail.example.com>
+Subject: Test
+
+--==genemail.test-rel-1==
+Content-Type: multipart/alternative; boundary="==genemail.test-alt-2=="
+MIME-Version: 1.0
+
+--==genemail.test-alt-2==
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+test.
+
+
+--==genemail.test-alt-2==
+Content-Type: multipart/related; boundary="==genemail.test-rel-3=="
+MIME-Version: 1.0
+
+--==genemail.test-rel-3==
+MIME-Version: 1.0
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <p>test.</p>
+  </body>
+</html>
+
+--==genemail.test-rel-3==--
+--==genemail.test-alt-2==--
+--==genemail.test-rel-1==--
+'''
+    self.assertMultiLineEqual(wsstrip(chk), wsstrip(out['message']))
+
+
+  #----------------------------------------------------------------------------
   def test_managerBccHeader(self):
     tpl = '''\
 <html
