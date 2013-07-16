@@ -7,7 +7,9 @@
 # copy: (C) Copyright 2013 Cadit Health Inc., All Rights Reserved.
 #------------------------------------------------------------------------------
 
-import sys, argparse, yaml, os.path
+import sys, argparse, yaml, os.path, getpass
+import templatealchemy as ta
+from templatealchemy import stream
 from . import manager, sender
 
 #------------------------------------------------------------------------------
@@ -49,12 +51,12 @@ def main(args=None, output=None):
     help='sets the TemplateAlchemy rendering driver (default: %(default)r)')
 
   cli.add_argument(
-    '-H', '--smtp-host', metavar='HOST',
+    '--smtp-host', metavar='HOST',
     default='localhost',
     help='set the SMTP server hostname (default: %(default)r)')
 
   cli.add_argument(
-    '-P', '--smtp-port', metavar='PORT',
+    '--smtp-port', metavar='PORT',
     default=25, type=int,
     help='set the SMTP server port number (default: %(default)r)')
 
@@ -78,7 +80,25 @@ def main(args=None, output=None):
     ' is specified, but not `--smtp-password` or the password is exactly'
     ' "-", the password will be prompted for securely)')
 
-  # TODO: add output control, --html --text --smtp, etc.
+  cli.add_argument(
+    '-T', '--text',
+    action='store_true',
+    help='don\'t send the email; just display the TEXT version')
+
+  cli.add_argument(
+    '-H', '--html',
+    action='store_true',
+    help='don\'t send the email; just display the HTML version')
+
+  cli.add_argument(
+    '-S', '--standalone',
+    action='store_true',
+    help='with `--html`, render the "standalone" verion')
+
+  cli.add_argument(
+    '-s', '--smtp',
+    action='store_true',
+    help='don\'t send the email; just display the SMTP request')
 
   cli.add_argument(
     'source', metavar='SOURCE',
@@ -88,49 +108,74 @@ def main(args=None, output=None):
 
   options = cli.parse_args(args)
 
-  # params = dict()
+  params = dict()
 
-  # for yparam in options.params:
-  #   if yparam == '-':
-  #     yparam = sys.stdin.read()
-  #   elif yparam.startswith('@'):
-  #     with open(yparam[1:], 'rb') as fp:
-  #       yparam = fp.read()
-  #   try:
-  #     yparam = yaml.load(yparam)
-  #   except Exception:
-  #     cli.error('could not parse YAML expression: %r'
-  #               % (yparam,))
-  #   if not isinstance(yparam, dict):
-  #     cli.error('"--params" expressions must resolve to dictionaries')
-  #   params.update(yparam)
+  for yparam in options.params:
+    if yparam == '-':
+      yparam = sys.stdin.read()
+    elif yparam.startswith('@'):
+      with open(yparam[1:], 'rb') as fp:
+        yparam = fp.read()
+    try:
+      yparam = yaml.load(yparam)
+    except Exception:
+      cli.error('could not parse YAML expression: %r'
+                % (yparam,))
+    if not isinstance(yparam, dict):
+      cli.error('"--params" expressions must resolve to dictionaries')
+    params.update(yparam)
 
-  # for kparam in options.param:
-  #   if '=' not in kparam:
-  #     cli.error('"--param" expressions must be in the KEY=VALUE format')
-  #   key, value = kparam.split('=', 1)
-  #   params[key] = value
+  for kparam in options.param:
+    if '=' not in kparam:
+      cli.error('"--param" expressions must be in the KEY=VALUE format')
+    key, value = kparam.split('=', 1)
+    params[key] = value
 
-  # options.params = params
-  # output = output or sys.stdout
+  options.params = params
+  output = output or sys.stdout
 
-  # if options.source is None or options.source == '-':
-  #   options.source = stream.StreamSource(sys.stdin)
-  # elif ':' not in options.source and os.path.isfile(options.source):
-  #   options.source = stream.StreamSource(open(options.source, 'rb'))
+  if options.source is None or options.source == '-':
+    options.source = stream.StreamSource(sys.stdin)
+  elif ':' not in options.source and os.path.isfile(options.source):
+    options.source = stream.StreamSource(open(options.source, 'rb'))
 
-  # template = engine.Template(
-  #   source=options.source,
-  #   renderer=options.renderer,
-  #   )
+  template = ta.Template(
+    source   = options.source,
+    renderer = options.renderer,
+    )
 
-  # if options.name is not None:
-  #   template = template.getTemplate(options.name)
+  if options.smtp_username and (
+    not options.smtp_password or options.smtp_password == '-' ):
+    options.smtp_password = getpass.getpass(prompt='SMTP Password: ')
 
-  # output.write(template.render(options.format, options.params))
+  emlsender = sender.SmtpSender(
+    host     = options.smtp_host,
+    port     = options.smtp_port,
+    ssl      = options.smtp_ssl,
+    starttls = options.smtp_starttls,
+    username = options.smtp_username,
+    password = options.smtp_password,
+    )
 
-  emlman = manager.Manager()
+  emlman = manager.Manager(provider=template, sender=emlsender)
+  eml    = emlman.newEmail(options.name)
 
+  for k, v in options.params.items():
+    eml[k] = v
+
+  if options.text:
+    sys.stdout.write(eml.getText())
+    return 0
+
+  if options.html:
+    sys.stdout.write(eml.getHtml(standalone=options.standalone))
+    return 0
+
+  if options.smtp:
+    sys.stdout.write(eml.getSmtpData())
+    return 0
+
+  eml.send()
   return 0
 
 #------------------------------------------------------------------------------
