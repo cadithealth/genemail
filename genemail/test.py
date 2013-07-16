@@ -246,7 +246,11 @@ class TestEmail(unittest.TestCase):
  </body>
 </html>
 '''
-    tchk = '''This is a test.\n\nAlso sent to: foo@example.com.\n\n'''
+    tchk = '''\
+This is a test.
+
+Also sent to: foo@example.com.
+'''
     etchk = '''\
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -311,7 +315,6 @@ This is a test.
 Also sent to: foo@example.com.
 
 [smiley]
-
 '''
     eml = Manager(sender=StoredSender(), provider=template(tpl)).newEmail()
     eml['message'] = 'This is a test'
@@ -338,7 +341,11 @@ p > span { font-weight: bold; }
  </body>
 </html>
 '''
-    tchk = '''This is a test.\n\nAlso sent to: foo@example.com.\n\n'''
+    tchk = '''\
+This is a test.
+
+Also sent to: foo@example.com.
+'''
     etchk = '''\
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -696,7 +703,6 @@ Content-Transfer-Encoding: 7bit
   #   # todo
   #   pass
 
-  # TODO: test standalone HTML...
   # TODO: test non-CID attachments...
   # TODO: test CID-cleansing...
 
@@ -728,6 +734,96 @@ settings:
     eml = Manager(sender=StoredSender(), provider=template(tpl)).newEmail()
     self.assertEqual(eml.getSetting('env-name'), 'feedback env-value')
     self.assertEqual(eml.getSettings(), dict([['env-name', 'feedback env-value']]))
+
+  #----------------------------------------------------------------------------
+  def test_standaloneHtml(self):
+    tpl = '''\
+<html
+ xmlns="http://www.w3.org/1999/xhtml"
+ xmlns:email="http://pythonhosted.org/genemail/xmlns/1.0"
+ >
+ <head>
+  <email:header name="To">test@example.com</email:header>
+  <email:header name="From">noreply@example.com</email:header>
+  <title email:subject="content">${message.title()}</title>
+  <email:attachment name="slogan.txt" encoding="base64" cid="true">
+    QUxMIFlPVVIgQkFTRSBBUkUgQkVMT05HIFRPIFVT
+  </email:attachment>
+ </head>
+ <body>
+  <p>${message} <img src="cid:slogan.txt"/>.</p>
+ </body>
+</html>
+'''
+    chk = '''\
+'''
+    manager = Manager(sender=StoredSender(), provider=template(tpl))
+    eml = manager.newEmail()
+    eml['message'] = 'Foo the bar'
+    # override the UNpredictable generated info...
+    eml.setHeader('date', 'Fri, 13 Feb 2009 23:31:30 -0000')
+    eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
+    eml.boundary = 'genemail.test'
+    eml.send()
+    self.assertEqual(1, len(manager.sender.emails))
+    out = manager.sender.emails[0]
+    chk = '''\
+Content-Type: multipart/alternative; boundary="==genemail.test-alt-2=="
+MIME-Version: 1.0
+Date: Fri, 13 Feb 2009 23:31:30 -0000
+To: test@example.com
+Message-ID: <1234567890@@genemail.example.com>
+From: noreply@example.com
+Subject: Foo The Bar
+
+--==genemail.test-alt-2==
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+Foo the bar [].
+
+--==genemail.test-alt-2==
+Content-Type: multipart/related; boundary="==genemail.test-rel-3=="
+MIME-Version: 1.0
+
+--==genemail.test-rel-3==
+MIME-Version: 1.0
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Foo The Bar</title>
+  </head>
+  <body>
+    <p>Foo the bar <img src="cid:slogan.txt" />.</p>
+  </body>
+</html>
+--==genemail.test-rel-3==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment
+Content-ID: <slogan.txt>
+
+ALL YOUR BASE ARE BELONG TO US
+--==genemail.test-rel-3==--
+--==genemail.test-alt-2==--
+'''
+    self.assertMultiLineEqual(wsstrip(chk), wsstrip(out['message']))
+    chk = '''\
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Foo The Bar</title>
+  </head>
+  <body>
+    <p>Foo the bar <img src="data:text/plain;base64,QUxMIFlPVVIgQkFTRSBBUkUgQkVMT05HIFRPIFVT" />.</p>
+  </body>
+</html>
+'''
+    self.assertXmlEqual(chk, eml.getHtml(standalone=True))
+
 
 #------------------------------------------------------------------------------
 if __name__ == '__main__':

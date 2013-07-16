@@ -207,7 +207,9 @@ class Email(object):
 
   #----------------------------------------------------------------------------
   def getTemplateAttachments(self):
-    atts = {} # TODO: load `spec` attachments...
+    atts = {}
+    for att in self.template.meta.attachments or []:
+      atts[att.name] = att
     xdoc = self.getTemplateXml()
     for node in xdoc.iter('{%s}attachment' % (xmlns,)):
       att = adict(
@@ -274,17 +276,17 @@ class Email(object):
 
     return util.serializeHtml(html)
 
-  # #----------------------------------------------------------------------------
-  # def inlineCidAttachments(self, html):
-  #   # TODO: this is a "brute-force" approach... clean it up!
-  #   atts = self.getAttachments()
-  #   for att in atts:
-  #     if not att.get('cid', False):
-  #       continue
-  #     # TODO: assuming PNG... inspect att['content-type']...
-  #     value = 'data:image/png;base64,' + base64.b64encode(att['value'])
-  #     html = html.replace('cid:' + att['name'], value)
-  #   return html
+  #----------------------------------------------------------------------------
+  def inlineCidAttachments(self, html):
+    for att in self.getAttachments():
+      if not att.cid:
+        continue
+      ct = att.contentType or 'application/octet-stream'
+      value = 'data:' + ct + ';base64,' + base64.b64encode(att['value'])
+      # todo: this is a "brute-force" approach... i should replace only
+      #       attributes that have this exact value...
+      html = html.replace('cid:' + att.name, value)
+    return html
 
   #----------------------------------------------------------------------------
   def getText(self):
@@ -304,7 +306,7 @@ class Email(object):
     # todo: this seems a bit brute-force to reduce to ascii? perhaps
     #       the caller should inspect the text and change the content type?
     #       or, better yet, have this return a tuple with the content type
-    return util.removeCids(util.reduce2ascii(text))
+    return util.removeCids(util.reduce2ascii(text)).strip() + '\n'
 
   subject_collapse_spaces = re.compile(r'[\s]+', re.DOTALL)
   subject_remove_nonascii = re.compile(r'[^ -~]+', re.DOTALL)
@@ -496,6 +498,7 @@ class Email(object):
     funcs.make_mime_alternative = make_mime_alternative
 
     def make_mime_related(spec, type=None):
+      # TODO: do something with `type`...
       comp = email.MIMEMultipart.MIMEMultipart(
         'related', boundary=make_boundary('rel'))
       comp = funcs.comp_extend(comp, spec)
@@ -562,7 +565,10 @@ class Email(object):
     for k,v in curheaders.items():
       msg[util.smtpHeaderFormat(k)] = v
 
-    return msg.as_string()
+    msg = msg.as_string()
+    if not msg.endswith('\n'):
+      msg += '\n'
+    return msg
 
   #----------------------------------------------------------------------------
   def send(self, mailfrom=None, recipients=None):
