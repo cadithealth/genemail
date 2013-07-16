@@ -1,0 +1,4 @@
+- add documentation about:
+  - .structure
+  - ... and much more
+- add 'auto_bcc' parameter to top-level Template
