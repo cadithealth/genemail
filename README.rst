@@ -42,12 +42,11 @@ Use:
 
   # configure a genemail manager that uses the local SMTP server
   # and uses mako templates from a python package named 'mypackage'
-  manager = genemail.Manager(
+  manager = genemail.Template(
     sender   = genemail.SmtpSender(host='localhost', port='25'),
     provider = TA.Manager(
       source   = 'pkg:mypackage:templates/email',
       renderer = 'mako'),
-    auto_bcc = 'bcc@example.com'
     )
 
   # get an email template object
@@ -63,20 +62,6 @@ Use:
     name        = 'invite.ics',
     value       = create_invite(...),
     contentType = 'text/calendar; name=invite.ics; method=PUBLISH')
-
-  # change the default MIME structure
-  eml.structure = {
-    'mime:multipart': [
-      {'mime:alternative': [
-        {'mime:related': [
-          'email:html',
-          {'mime:attachments': 'email:attachments[cid]'},
-          ]},
-        'email:text',
-        ]},
-      {'mime:attachments': 'email:attachments[!cid]'},
-      ]
-    }
 
   # and send the email
   eml.send()
