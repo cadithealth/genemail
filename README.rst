@@ -2,6 +2,11 @@
 genemail
 ========
 
+.. WARNING::
+
+  2013/07/18: genemail is in its very early stages - you should come
+  back later.
+
 `genemail` makes creating and sending templated email easier. The
 following features are built-in:
 
