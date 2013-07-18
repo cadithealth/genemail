@@ -39,6 +39,11 @@ class TestEmail(unittest.TestCase):
     self.assertMultiLineEqual(eqstrip(val),eqstrip(chk))
 
   #----------------------------------------------------------------------------
+  def assertMimeXmlEqual(self, val, chk):
+    # TODO: make this XML-normalize the XML/HTML values first...
+    self.assertMultiLineEqual(wsstrip(val), wsstrip(chk))
+
+  #----------------------------------------------------------------------------
   def test_inlineHtmlStyling(self):
     html = '<html><body><div>foo</div></body></html>'
     css  = 'body{color:red}body > div{font-size:10px}'
@@ -487,9 +492,7 @@ Content-ID: <smiley.png>
     eml.send()
     self.assertEqual(schk, eml.getSubject())
     self.assertXmlEqual(hchk, eml.getHtml())
-    #self.assertMultiLineEqual(chk, eml.manager.sender.emails[0]['message'])
-    self.assertMultiLineEqual(wsstrip(chk), wsstrip(eml.manager.sender.emails[0]['message']))
-    #self.assertMultiLineEqual(eqstrip(chk), eqstrip(eml.manager.sender.emails[0]['message']))
+    self.assertMimeXmlEqual(eml.manager.sender.emails[0]['message'], chk)
 
   #----------------------------------------------------------------------------
   def test_default_recycling(self):
@@ -586,7 +589,7 @@ Content-Transfer-Encoding: 7bit
 
 --==genemail.test-alt-2==--
 '''
-    self.assertMultiLineEqual(wsstrip(chk), wsstrip(out['message']))
+    self.assertMimeXmlEqual(out['message'], chk)
 
   #----------------------------------------------------------------------------
   def test_noMinimalMime(self):
@@ -663,8 +666,7 @@ Content-Transfer-Encoding: 7bit
 --==genemail.test-alt-2==--
 --==genemail.test-rel-1==--
 '''
-    self.assertMultiLineEqual(wsstrip(chk), wsstrip(out['message']))
-
+    self.assertMimeXmlEqual(out['message'], chk)
 
   #----------------------------------------------------------------------------
   def test_managerBccHeader(self):
@@ -811,7 +813,7 @@ ALL YOUR BASE ARE BELONG TO US
 --==genemail.test-rel-3==--
 --==genemail.test-alt-2==--
 '''
-    self.assertMultiLineEqual(wsstrip(chk), wsstrip(out['message']))
+    self.assertMimeXmlEqual(out['message'], chk)
     chk = '''\
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
