@@ -24,7 +24,7 @@ test_requires = [
   ]
 
 requires = [
-  'TemplateAlchemy      >= 0.1.7',
+  'TemplateAlchemy      >= 0.1.14',
   'cssutils             >= 0.9.10b1',
   'cssselect            >= 0.7.1',
   'py-dom-xpath         >= 0.1',
@@ -39,7 +39,7 @@ entrypoints = {
 
 setup(
   name                  = 'genemail',
-  version               = '0.1.1',
+  version               = '0.1.2',
   description           = 'A templated email generation library',
   long_description      = README,
   classifiers           = [
