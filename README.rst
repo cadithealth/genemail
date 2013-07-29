@@ -4,7 +4,7 @@ genemail
 
 .. WARNING::
 
-  2013/07/18: genemail is in its very early stages - you should come
+  2013/07/29: genemail is in its very early stages - you should come
   back later.
 
 `genemail` makes creating and sending templated email easier. The
@@ -16,7 +16,7 @@ following features are built-in:
   template.
 
 * **Automatic inlining of CSS** for maximum backward compatibility
-  with old or problematic email clients.
+  with old and/or problematic email clients.
 
 * **Automatic attachment management** allows a common email template
   to specify default attachments; additional attachments can be added
@@ -30,6 +30,10 @@ following features are built-in:
   sender mechanism that allows outbound emails to be trapped for
   analysis instead of being delivered.
 
+* **Support for DKIM email header generation** so that emails that
+  are indeed not spam are less likely to be identified as such.
+
+
 TL;DR
 =====
 
@@ -39,23 +43,44 @@ Install:
 
   $ pip install genemail
 
-Use:
+Given the following package file structure:
+
+::
+
+  -- mypackage/
+     `-- templates/
+         `-- email/
+             |-- logo.png
+             |-- invite.html
+             |-- invite.spec         # if missing: defaults are used
+             |     Example content:
+             |       attachments:
+             |         - name:  logo.png
+             |           value: !include-raw logo.png
+             |           cid:   true
+             `-- invite.text         # if missing: auto-generated from .html
+
+Use genemail as follows:
 
 .. code-block:: python
 
-  import genemail, templatealchemy as TA
+  import genemail, templatealchemy as ta
 
   # configure a genemail manager that uses the local SMTP server
   # and uses mako templates from a python package named 'mypackage'
-  manager = genemail.Template(
+  manager = genemail.Manager(
     sender   = genemail.SmtpSender(host='localhost', port='25'),
-    provider = TA.Manager(
+    provider = ta.Manager(
       source   = 'pkg:mypackage:templates/email',
       renderer = 'mako'),
+    modifier = genemail.DkimModifier(
+      selector = 'selector._domainkey.example.com',
+      key      = '/path/to/private-rsa.key',
+      )
     )
 
   # get an email template object
-  eml = manager.getEmail('registered')
+  eml = manager.getEmail('invite')
 
   # set some parameters that will be used by mako to render the
   # template
@@ -70,6 +95,12 @@ Use:
 
   # and send the email
   eml.send()
+
+  # the resulting email will:
+  #   - have two alternative formats (text/plain and text/html)
+  #   - have one top-level attachment (text/calendar)
+  #   - have one text/html related attachment (logo.png)
+  #   - be DKIM-signed
 
 Overview
 ========
