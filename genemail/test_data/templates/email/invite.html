@@ -1,0 +1,30 @@
+# -*- coding: utf-8 -*-
+<!DOCTYPE html>
+<html
+ lang="en"
+ xml:lang="en"
+ xmlns="http://www.w3.org/1999/xhtml"
+ xmlns:email="http://pythonhosted.org/genemail/xmlns/1.0"
+ >
+ <head>
+  <meta charset="utf-8"/>
+  <title email:subject="content">Hello!</title>
+  <email:header name="From">"Hello World" &lt;noreply@example.com&gt;</email:header>
+  <email:header name="To">"${name}" &lt;${email}&gt;</email:header>
+ </head>
+ <body>
+  <img src="cid:logo.png"/>
+  <h1>Hello ${name}!</h1>
+  <p>Please find your invite attached. <img src="cid:smiley.png"/></p>
+  <img src="cid:sig.png"/>
+ </body>
+ <email:attachment name="sig.png" cid="true" encoding="base64">
+  iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAABlBMVEUAAAAAAAClZ7nPAAAAAXRS
+  TlMAQObYZgAAAB5JREFUCNdj+MDAIMDAIMTAwMjA8L8BRAqBRT4wAAAyoQOmAXy5oQAAAABJRU5E
+  rkJggg==
+ </email:attachment>
+ <email:attachment name="smiley.png" cid="true" encoding="base64">
+  iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAQAAABKmM6bAAAAOElEQVQI12WOQQ4AQAQDpxv//3L3
+  YJvI6oGgA2E+FVizIZ9OciIUxBf3YemB2TPALhqtns+r2n9d0gAQF+Ohrm4AAAAASUVORK5CYII=
+ </email:attachment>
+</html>

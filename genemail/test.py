@@ -7,7 +7,7 @@
 #------------------------------------------------------------------------------
 
 import sys, unittest, re
-import templatealchemy as TA
+import templatealchemy as ta
 
 from .manager import Manager
 from .sender import Sender, StoredSender
@@ -22,7 +22,7 @@ def wsstrip(val):
   return re.sub('\s+', '', val)
 
 def template(s, renderer='mako'):
-  return TA.Template(source='string:' + s, renderer=renderer)
+  return ta.Template(source='string:' + s, renderer=renderer)
 
 #------------------------------------------------------------------------------
 class TestEmail(unittest.TestCase):
@@ -40,8 +40,12 @@ class TestEmail(unittest.TestCase):
 
   #----------------------------------------------------------------------------
   def assertMimeXmlEqual(self, val, chk):
+    if val == chk:
+      return self.assertEqual(val, chk)
+    if wsstrip(val) == wsstrip(chk):
+      return self.assertEqual(wsstrip(val), wsstrip(chk))
     # TODO: make this XML-normalize the XML/HTML values first...
-    self.assertMultiLineEqual(wsstrip(val), wsstrip(chk))
+    self.assertMultiLineEqual(eqstrip(val), eqstrip(chk))
 
   #----------------------------------------------------------------------------
   def test_inlineHtmlStyling(self):
@@ -826,6 +830,130 @@ ALL YOUR BASE ARE BELONG TO US
 '''
     self.assertXmlEqual(chk, eml.getHtml(standalone=True))
 
+  #----------------------------------------------------------------------------
+  def test_spec_override(self):
+    manager = Manager(
+      sender   = StoredSender(),
+      provider = ta.Manager(
+        source   = 'pkg:genemail:test_data/templates/email',
+        renderer = 'mako'),
+      # modifier = genemail.DkimModifier(
+      #   selector = 'selector._domainkey.example.com',
+      #   key      = '/path/to/private-rsa.key',
+      #   )
+      )
+    eml = manager.newEmail('invite')
+    eml['name'] = 'Joe Schmoe'
+    eml['email'] = 'test@example.com'
+    eml.addAttachment(
+      name        = 'invite.ics',
+      value       = '''\
+BEGIN:VCALENDAR
+PRODID:-//Mozilla.org/NONSGML Mozilla Calendar V1.1//EN
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:Test Invite
+END:VEVENT
+END:VCALENDAR
+''',
+      contentType = 'text/calendar; name=invite.ics; method=PUBLISH')
+    # override the UNpredictable generated info...
+    eml.setHeader('date', 'Fri, 13 Feb 2009 23:31:30 -0000')
+    eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
+    eml.boundary = 'genemail.test'
+    eml.send()
+    self.assertEqual(1, len(manager.sender.emails))
+    out = manager.sender.emails[0]
+    chk = '''\
+Content-Type: multipart/mixed; boundary="==genemail.test-mix-1=="
+MIME-Version: 1.0
+Date: Fri, 13 Feb 2009 23:31:30 -0000
+To: "Joe Schmoe" <test@example.com>
+Message-ID: <1234567890@@genemail.example.com>
+From: "Hello World" <noreply@example.com>
+Subject: Hello!
+
+--==genemail.test-mix-1==
+Content-Type: multipart/alternative; boundary="==genemail.test-alt-2=="
+MIME-Version: 1.0
+
+--==genemail.test-alt-2==
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+Hello Joe Schmoe, please find your invite attached.
+
+--==genemail.test-alt-2==
+Content-Type: multipart/related; boundary="==genemail.test-rel-3=="
+MIME-Version: 1.0
+
+--==genemail.test-rel-3==
+MIME-Version: 1.0
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hello!</title>
+  </head>
+  <body>
+    <img src="cid:logo.png" />
+    <h1>Hello Joe Schmoe!</h1>
+    <p>Please find your invite attached. <img src="cid:smiley.png" /></p>
+    <img src="cid:sig.png" />
+  </body>
+  </html>
+--==genemail.test-rel-3==
+Content-Type: image/png; name="smiley.png"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment
+Content-ID: <smiley.png>
+
+iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAQAAABKmM6bAAAAOElEQVQI12WOQQ4AQAQDpxv//3L3
+YJvI6oGgA2E+FVizIZ9OciIUxBf3YemB2TPALhqtns+r2n9d0gAQF+Ohrm4AAAAASUVORK5CYII=
+--==genemail.test-rel-3==
+Content-Type: image/png; name="logo.png"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment
+Content-ID: <logo.png>
+
+iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAABlBMVEX///8AAABVwtN+AAAAAXRS
+TlMAQObYZgAAAAFiS0dEAIgFHUgAAAAgSURBVAjXY6hnYPjPwLCEgUEFjFIYGNIaGJ43MBxmAABI
+GwXfd8ROSAAAAABJRU5ErkJggg==
+--==genemail.test-rel-3==
+Content-Type: image/png; name="sig.png"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment
+Content-ID: <sig.png>
+
+iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAABlBMVEUAAAAAAAClZ7nPAAAAAXRS
+TlMAQObYZgAAAB5JREFUCNdj+MDAIMDAIMTAwMjA8L8BRAqBRT4wAAAyoQOmAXy5oQAAAABJRU5E
+rkJggg==
+--==genemail.test-rel-3==--
+--==genemail.test-alt-2==--
+--==genemail.test-mix-1==
+MIME-Version: 1.0
+Content-Type: text/calendar; name="invite.ics"; method="PUBLISH";
+ charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="invite.ics"
+
+BEGIN:VCALENDAR
+PRODID:-//Mozilla.org/NONSGML Mozilla Calendar V1.1//EN
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:Test Invite
+END:VEVENT
+END:VCALENDAR
+
+--==genemail.test-mix-1==--
+'''
+    self.assertMimeXmlEqual(out['message'], chk)
 
 #------------------------------------------------------------------------------
 if __name__ == '__main__':
