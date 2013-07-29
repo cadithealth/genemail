@@ -22,6 +22,9 @@ following features are built-in:
   to specify default attachments; additional attachments can be added
   to individual emails.
 
+* **Support for DKIM email header generation** so that emails that
+  are indeed not spam are less likely to be identified as such.
+
 * **Preview data** allows templates to define sample data so that
   email previews can be generated with predefined data and/or dynamic
   data.
@@ -29,9 +32,6 @@ following features are built-in:
 * **Unit of test for generated emails** is made easier thanks to a
   sender mechanism that allows outbound emails to be trapped for
   analysis instead of being delivered.
-
-* **Support for DKIM email header generation** so that emails that
-  are indeed not spam are less likely to be identified as such.
 
 
 TL;DR
