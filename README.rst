@@ -80,7 +80,7 @@ Use genemail as follows:
     )
 
   # get an email template object
-  eml = manager.getEmail('invite')
+  eml = manager.newEmail('invite')
 
   # set some parameters that will be used by mako to render the
   # template
