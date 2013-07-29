@@ -27,9 +27,6 @@ xmlns = 'http://pythonhosted.org/genemail/xmlns/1.0'
 htmlns = util.htmlns
 class MissingHeader(Exception): pass
 
-extractEnv_expr = re.compile(
-  '<email:env\s+name\s*=\s*"([^"]*)"\s*>(.*?)</email:env>', flags=re.DOTALL)
-
 #------------------------------------------------------------------------------
 class Email(object):
 
@@ -437,10 +434,13 @@ class Email(object):
       raise TypeError('could not encode email html component - try setting an encoding')
     funcs.make_email_html = make_email_html
 
+    funcs.atts_cache = None
     def make_email_attachments(cid=False):
       if self.includeComponents and 'attachments' not in self.includeComponents:
         return None
-      return [att for att in self.getAttachments() if att.cid == cid]
+      if funcs.atts_cache is None:
+        funcs.atts_cache = self.getAttachments()
+      return [att for att in funcs.atts_cache if att.cid == cid]
     funcs.make_email_attachments = make_email_attachments
 
     funcs.bndidx = 0
