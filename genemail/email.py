@@ -36,16 +36,14 @@ class Email(object):
   DEFAULTS = dict(
     structure = {
 
-      # TODO: is this the right structure for adding non-Content-ID attachments?...
-      #       (e.g. boarding-pass style appt sheet)
-
-      #  mail structure:
+      #  default mail structure:
       #
-      #     multipart/alternative
-      #     |-- text/plain
-      #     |-- multipart/related; type="text/html"
-      #     |   |-- text/html
-      #     |   `-- image/png... [attachments with "Content-ID"]
+      #     multipart/mixed [IFF there are attachments without "Content-ID"]
+      #     |-- multipart/alternative
+      #     |   |-- text/plain
+      #     |   `-- multipart/related; type="text/html"
+      #     |       |-- text/html
+      #     |       `-- image/png... [attachments with "Content-ID"]
       #     `-- application/octet-stream... [attachments without "Content-ID"]
       #
       #               Content-Type: image/png
@@ -53,18 +51,7 @@ class Email(object):
       #               Content-Location: file:///.../...
       #               Content-ID: <ImageName>
 
-      # 'mime:alternative': [
-      #   'email:text',
-      #   {'mime:related; type="text/html"': [
-      #     'email:html',
-      #     {'mime:attachments': 'email:attachments; cid=True'},
-      #     ]},
-      #   {'mime:attachments': 'email:attachments; cid=False'},
-      #   ]
-
-      # TODO: or is this the right structure?
-
-      'mime:related': [
+      'mime:mixed; optimize=True': [
         {'mime:alternative': [
           'email:text',
           {'mime:related; type="text/html"': [
@@ -485,29 +472,31 @@ class Email(object):
       return comp
     funcs.comp_extend = comp_extend
 
-    def make_mime_alternative(spec):
-      comp = email.MIMEMultipart.MIMEMultipart(
-        'alternative', boundary=make_boundary('alt'))
-      comp = funcs.comp_extend(comp, spec)
-      if self.minimalMime:
+    def checkMinimalMime(comp, optimize=None):
+      if optimize is True or self.minimalMime:
         load = comp.get_payload()
         if not isinstance(load, basestring) \
             and len(load) == 1:
           return load[0]
       return comp
+
+    def make_mime_mixed(spec, optimize=None):
+      comp = email.MIMEMultipart.MIMEMultipart(
+        'mixed', boundary=make_boundary('mix'))
+      return checkMinimalMime(funcs.comp_extend(comp, spec))
+    funcs.make_mime_mixed = make_mime_mixed
+
+    def make_mime_alternative(spec, optimize=None):
+      comp = email.MIMEMultipart.MIMEMultipart(
+        'alternative', boundary=make_boundary('alt'))
+      return checkMinimalMime(funcs.comp_extend(comp, spec))
     funcs.make_mime_alternative = make_mime_alternative
 
-    def make_mime_related(spec, type=None):
+    def make_mime_related(spec, type=None, optimize=None):
       # TODO: do something with `type`...
       comp = email.MIMEMultipart.MIMEMultipart(
         'related', boundary=make_boundary('rel'))
-      comp = funcs.comp_extend(comp, spec)
-      if self.minimalMime:
-        load = comp.get_payload()
-        if not isinstance(load, basestring) \
-            and len(load) == 1:
-          return load[0]
-      return comp
+      return checkMinimalMime(funcs.comp_extend(comp, spec))
     funcs.make_mime_related = make_mime_related
 
     def make_mime_attachments(spec):

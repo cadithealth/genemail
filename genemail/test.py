@@ -624,7 +624,7 @@ Content-Transfer-Encoding: 7bit
     self.assertEqual('mailfrom@example.com', out['mailfrom'])
     self.assertEqual(sorted(['rcpt@example.com', 'bcc@example.com']), sorted(out['recipients']))
     chk = '''\
-Content-Type: multipart/related; boundary="==genemail.test-rel-1=="
+Content-Type: multipart/mixed; boundary="==genemail.test-mix-1=="
 MIME-Version: 1.0
 From: mailfrom@example.com
 To: rcpt@example.com
@@ -632,7 +632,7 @@ Date: Fri, 13 Feb 2009 23:31:30 -0000
 Message-ID: <1234567890@@genemail.example.com>
 Subject: Test
 
---==genemail.test-rel-1==
+--==genemail.test-mix-1==
 Content-Type: multipart/alternative; boundary="==genemail.test-alt-2=="
 MIME-Version: 1.0
 
@@ -664,7 +664,7 @@ Content-Transfer-Encoding: 7bit
 
 --==genemail.test-rel-3==--
 --==genemail.test-alt-2==--
---==genemail.test-rel-1==--
+--==genemail.test-mix-1==--
 '''
     self.assertMimeXmlEqual(out['message'], chk)
 
