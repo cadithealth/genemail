@@ -29,6 +29,8 @@ requires = [
   'cssselect            >= 0.7.1',
   'py-dom-xpath         >= 0.1',
   'html2text            >= 3.200.3',
+  'dkimpy               >= 0.5.4',
+  'dnspython            >= 1.11.0',
   ]
 
 entrypoints = {
@@ -39,7 +41,7 @@ entrypoints = {
 
 setup(
   name                  = 'genemail',
-  version               = '0.1.2',
+  version               = '0.1.3',
   description           = 'A templated email generation library',
   long_description      = README,
   classifiers           = [
