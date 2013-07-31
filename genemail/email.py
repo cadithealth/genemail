@@ -168,8 +168,10 @@ class Email(object):
       if fmt in self.template.meta.formats:
         return util.parseXml(self.template.render(fmt, self.params))
     if fallbackToNone:
-      # todo: trap this against XML parse errors and return none
-      return util.parseXml(self.template.render(None, self.params))
+      try:
+        return util.parseXml(self.template.render(None, self.params))
+      except ET.ParseError:
+        return None
     return None
 
   #----------------------------------------------------------------------------
@@ -180,6 +182,8 @@ class Email(object):
     #       rather than being able to tag an existing node, such as:
     #         <p>This email was sent to <span email:header="To">...</span>.</p>
     xdoc = self.getTemplateXml()
+    if xdoc is None:
+      return ret
     etag = '{%s}header' % (xmlns,)
     for node in xdoc.iter():
       if node.tag == etag:
@@ -195,6 +199,8 @@ class Email(object):
     for att in self.template.meta.attachments or []:
       atts[att.name] = att
     xdoc = self.getTemplateXml()
+    if xdoc is None:
+      return atts.values()
     for node in xdoc.iter('{%s}attachment' % (xmlns,)):
       att = adict(
         name        = node.get('name'),
@@ -213,6 +219,8 @@ class Email(object):
     if 'css' in self.template.meta.formats:
       ret.append(self.template.render('css', self.params))
     xdoc = self.getTemplateXml()
+    if xdoc is None:
+      return ' '.join(ret)
     # todo: what if the node has a "src" attribute...
     for node in xdoc.findall('{%s}head/{%s}style[@type="text/css"]' % (htmlns, htmlns)):
       ret.append(node.text)
@@ -225,6 +233,8 @@ class Email(object):
     sent with the current settings. Use :meth:`send` to actually send
     the email.
     '''
+
+    # todo: what if 'html' is not in `includeComponents`?
 
     if standalone:
       ret = self.getHtml()
@@ -279,9 +289,13 @@ class Email(object):
     generated if it were sent with the current settings. Use
     :meth:`send` to actually send the email.
     '''
+    # todo: what if 'text' is not in `includeComponents`?
     if 'text' in self.template.meta.formats:
       return self.template.render('text', self.params)
-    html = self.getHtml()
+    try:
+      html = self.getHtml()
+    except Exception:
+      return self.template.render(None, self.params)
     # todo: it would be interesting to be able to configure html2text to only
     #       put it footnotes for IMG tags that had non-"cid:" image references...
     text = html2text.html2text(html)
@@ -322,6 +336,8 @@ class Email(object):
     #       then more cleanly replace HTML entity characters...
     # todo: clean up this entity-replacement strategy
     xdoc = self.getTemplateXml()
+    if xdoc is None:
+      return self._cleanSubject(self.getText())
     etag = '{%s}subject' % (xmlns,)
     ret = []
     for node in xdoc.iter():
@@ -332,13 +348,6 @@ class Email(object):
     if ret:
       return ret
     return self._cleanSubject(self.getText())
-
-  # #----------------------------------------------------------------------------
-  # def getProviderAttachments(self):
-  #   # TODO: clean this up...
-  #   if self.attachmentTable is None:
-  #     self.attachmentTable = self.provider.getMap('attachments', {})
-  #   return self.attachmentTable
 
   #----------------------------------------------------------------------------
   def getAttachments(self):
@@ -373,10 +382,10 @@ class Email(object):
     Returns the raw SMTP data that would be sent if the email were sent
     with the current settings. Use :meth:`send` to actually send the email.
     '''
-    return self._getSmtpData(self.getOutputHeaders())
+    return self._getMimeMessage(self.getOutputHeaders()).as_string()
 
   #----------------------------------------------------------------------------
-  def _getSmtpData(self, curheaders):
+  def _getMimeMessage(self, curheaders):
 
     curheaders = idict(curheaders)
 
@@ -554,9 +563,6 @@ class Email(object):
     for k,v in curheaders.items():
       msg[util.smtpHeaderFormat(k)] = v
 
-    msg = msg.as_string()
-    if not msg.endswith('\n'):
-      msg += '\n'
     return msg
 
   #----------------------------------------------------------------------------
@@ -598,11 +604,21 @@ class Email(object):
         raise MissingHeader('email destination ("to") not specified')
     elif isinstance(recipients, basestring):
       recipients = [recipients]
+    # todo: `updateRecipients` and `updateMailfrom` should be replaced
+    #       by using the new `Modifier` approach...
     if hasattr(self.manager, 'updateRecipients'):
       recipients = self.manager.updateRecipients(self, recipients)
     if hasattr(self.manager, 'updateMailfrom'):
       mailfrom = self.manager.updateMailfrom(self, mailfrom)
-    self.manager.sender.send(mailfrom, recipients, self._getSmtpData(hdrs))
+    data = self._getMimeMessage(hdrs)
+    if self.manager.modifier:
+      mailfrom, recipients, data = self.manager.modifier.modify(
+        mailfrom, recipients, data)
+    if not isinstance(data, basestring):
+      data = data.as_string()
+      if not data.endswith('\n'):
+        data += '\n'
+    self.manager.sender.send(mailfrom, recipients, data)
 
 #------------------------------------------------------------------------------
 # end of $Id$

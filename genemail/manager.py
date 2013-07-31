@@ -19,7 +19,7 @@ from . import email
 class Manager(object):
 
   #----------------------------------------------------------------------------
-  def __init__(self, provider=None, sender=None):
+  def __init__(self, provider=None, modifier=None, sender=None):
     '''
     A ``genemail.manager.Manager`` object is the main clearinghouse
     for generating templatized emails. The main objective is that it
@@ -31,6 +31,12 @@ class Manager(object):
       the template provider; if not specified, defaults to loading a
       `pkg` provider in the calling package's namespace.
 
+    modifier : :class:`genemail.modifier.Modifier`, optional
+      an email modifier, generally used for post-generation email
+      adjustment, such as always adding a blind-copy recipient
+      (equivalent to adding a BCC header) or adding cryptographic
+      signature headers or content with DKIM or GPG.
+
     sender : :class:`genemail.sender.Sender`, optional
       the email sending agent; if not specified, defaults to a
       SmtpSender with default parameters.
@@ -39,6 +45,7 @@ class Manager(object):
     if not self.provider:
       self.provider = TA.Template(
         source='pkg:%s:' % (callingPkgName(ignore='genemail'),))
+    self.modifier = modifier or None
     self.sender   = sender or sendermod.SmtpSender()
     self.default  = email.Email(self, None)
 

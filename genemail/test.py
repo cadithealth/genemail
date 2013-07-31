@@ -704,11 +704,6 @@ Content-Transfer-Encoding: 7bit
     out = sender.emails[0]
     self.assertEqual(sorted(['rcpt@example.com', 'bcc@example.com']), sorted(out['recipients']))
 
-  # #----------------------------------------------------------------------------
-  # def test_multiBccHeader(self):
-  #   # todo
-  #   pass
-
   # TODO: test non-CID attachments...
   # TODO: test CID-cleansing...
 
