@@ -604,12 +604,6 @@ class Email(object):
         raise MissingHeader('email destination ("to") not specified')
     elif isinstance(recipients, basestring):
       recipients = [recipients]
-    # todo: `updateRecipients` and `updateMailfrom` should be replaced
-    #       by using the new `Modifier` approach...
-    if hasattr(self.manager, 'updateRecipients'):
-      recipients = self.manager.updateRecipients(self, recipients)
-    if hasattr(self.manager, 'updateMailfrom'):
-      mailfrom = self.manager.updateMailfrom(self, mailfrom)
     data = self._getMimeMessage(hdrs)
     if self.manager.modifier:
       mailfrom, recipients, data = self.manager.modifier.modify(
