@@ -10,6 +10,7 @@
 from __future__ import absolute_import
 
 from .manager import *
+from .email import *
 from .modifier import *
 from .sender import *
 
