@@ -90,7 +90,6 @@ class DkimModifier(Modifier):
       (defaults to the default dkimpy package value)
 
     algorithm : str, optional
-
       a list of strings indicating which headers are to be signed
       (defaults to the default dkimpy package value)
 
