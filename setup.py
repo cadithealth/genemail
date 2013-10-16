@@ -19,12 +19,13 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
 
 test_requires = [
-  'nose                 == 1.3.0',
+  'nose                 >= 1.3.0',
   'coverage             >= 3.5.3',
   ]
 
 requires = [
-  'TemplateAlchemy      >= 0.1.15',
+  'distribute           >= 0.6.24',
+  'TemplateAlchemy      >= 0.1.20',
   'cssutils             >= 0.9.10b1',
   'cssselect            >= 0.7.1',
   'py-dom-xpath         >= 0.1',
