@@ -11,6 +11,7 @@ from __future__ import absolute_import
 
 __all__ = ('Manager',)
 
+import templatealchemy as TA
 from templatealchemy.util import adict, callingPkgName
 from . import sender as sendermod
 from . import email
@@ -50,8 +51,8 @@ class Manager(object):
     self.default  = email.Email(self, None)
 
   #----------------------------------------------------------------------------
-  def newEmail(self, name=None):
-    return email.Email(self, name, default=self.default)
+  def newEmail(self, name=None, provider=None):
+    return email.Email(self, name, provider=provider, default=self.default)
 
 #------------------------------------------------------------------------------
 # end of $Id$
