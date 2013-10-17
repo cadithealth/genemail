@@ -369,9 +369,9 @@ class Email(object):
     defaultHeaders = {
       'Subject':     lambda: self.getSubject(),
       }
-    for name, func in defaultHeaders.items():
+    for name, value in defaultHeaders.items():
       if name not in curheaders:
-        curheaders[name] = func()
+        curheaders[name] = value() if callable(value) else value
     if hasattr(self.manager, 'updateHeaders'):
       self.manager.updateHeaders(self, curheaders)
     return curheaders
