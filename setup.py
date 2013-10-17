@@ -62,7 +62,6 @@ setup(
   url                   = 'http://github.com/cadithealth/genemail',
   keywords              = 'template email generation html text smtp',
   packages              = find_packages(),
-  namespace_packages    = ['genemail'],
   include_package_data  = True,
   zip_safe              = True,
   install_requires      = requires,
