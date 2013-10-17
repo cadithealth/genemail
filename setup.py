@@ -53,7 +53,7 @@ classifiers = [
 
 setup(
   name                  = 'genemail',
-  version               = '0.1.6',
+  version               = '0.1.7',
   description           = 'A templated email generation library',
   long_description      = read('README.rst'),
   classifiers           = classifiers,
