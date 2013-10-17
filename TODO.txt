@@ -1,4 +1,6 @@
-- add documentation about:
-  - Manager.default
-  - Email.structure
-  - ... and much more
+* add documentation about:
+  * Manager.default
+  * Email.structure
+  * ... and much more
+
+* add `less` support for CSS via lesscpy
