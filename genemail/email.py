@@ -80,9 +80,10 @@ class Email(object):
     self.name     = name
     self.provider = provider or self.manager.provider
     self.template = self.provider.getTemplate(self.name)
+    self._headers = idict()
     if default is None:
       default = adict(self.DEFAULTS)
-    for attr in (self.DEFAULTS.keys()):
+    for attr in self.DEFAULTS.keys():
       setattr(self, attr, copy.deepcopy(getattr(default, attr, None)))
 
     # self.attachmentTable    = None
@@ -124,6 +125,17 @@ class Email(object):
     *not* delete any headers set by the template(s).
     '''
     del self.headers[key]
+
+  #----------------------------------------------------------------------------
+  # note: for some reason @property...(setter|deleter) don't work with
+  # with setattr(...) in python 2.7.3. ugh. need to use old-style.
+  def getHeaders(self):
+    return self._headers
+  def setHeaders(self, val):
+    self._headers = idict(val)
+  def delHeaders(self):
+    self._headers = idict()
+  headers = property(getHeaders, setHeaders, delHeaders)
 
   #----------------------------------------------------------------------------
   def getSettings(self):
