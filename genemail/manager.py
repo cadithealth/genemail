@@ -20,7 +20,7 @@ from . import email
 class Manager(object):
 
   #----------------------------------------------------------------------------
-  def __init__(self, provider=None, modifier=None, sender=None):
+  def __init__(self, provider=None, modifier=None, sender=None, default=None):
     '''
     A ``genemail.manager.Manager`` object is the main clearinghouse
     for generating templatized emails. The main objective is that it
@@ -41,6 +41,10 @@ class Manager(object):
     sender : :class:`genemail.sender.Sender`, optional
       the email sending agent; if not specified, defaults to a
       SmtpSender with default parameters.
+
+    default : { dict, :class:`genemail.email.Email` }, optional
+      sets the default Email object whose attributes are deep-copied
+      into a new Email object (created with :meth:`newEmail`).
     '''
     self.provider = provider
     if not self.provider:
@@ -48,11 +52,17 @@ class Manager(object):
         source='pkg:%s:' % (callingPkgName(ignore='genemail'),))
     self.modifier = modifier or None
     self.sender   = sender or sendermod.SmtpSender()
-    self.default  = email.Email(self, None)
+    self.default  = default
+    if not isinstance(self.default, email.Email):
+      self.default = email.Email(self, None)
+      for attr, val in (default or {}).items():
+        if attr in email.Email.DEFAULTS:
+          setattr(self.default, attr, val)
 
   #----------------------------------------------------------------------------
-  def newEmail(self, name=None, provider=None):
-    return email.Email(self, name, provider=provider, default=self.default)
+  def newEmail(self, name=None, provider=None, default=None):
+    return email.Email(
+      self, name, provider=provider, default=default or self.default)
 
 #------------------------------------------------------------------------------
 # end of $Id$
