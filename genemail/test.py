@@ -950,9 +950,94 @@ END:VCALENDAR
 '''
     self.assertMimeXmlEqual(out['message'], chk)
 
-#------------------------------------------------------------------------------
-if __name__ == '__main__':
-  unittest.main() # pragma: no cover
+  #----------------------------------------------------------------------------
+  def test_email_headersAreCaseInsensitive(self):
+    tpl = '''\
+<html
+ xmlns="http://www.w3.org/1999/xhtml"
+ xmlns:email="http://pythonhosted.org/genemail/xmlns/1.0"
+ >
+ <head>
+  <title email:subject="content">${message.title()}</title>
+  <email:header name="to">rcpt@example.com</email:header>
+  <email:header name="frOM">mailfrom@example.com</email:header>
+ </head>
+ <body><p>${message}.</p></body>
+</html>
+'''
+    sender  = StoredSender()
+    manager = Manager(sender=sender, provider=template(tpl))
+    eml = manager.newEmail()
+    eml['message'] = 'test'
+    # override the UNpredictable generated info...
+    eml.setHeader('date', 'Fri, 13 Feb 2009 23:31:30 -0000')
+    eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
+    eml.includeComponents = ['text']
+    eml.send()
+    self.assertEqual(1, len(sender.emails))
+    out = sender.emails[0]
+    self.assertEqual(out.recipients, ['rcpt@example.com'])
+    self.assertEqual(out.mailfrom, 'mailfrom@example.com')
+
+  #----------------------------------------------------------------------------
+  def test_manager_defaultHeaders(self):
+    tpl = '''\
+<html
+ xmlns="http://www.w3.org/1999/xhtml"
+ xmlns:email="http://pythonhosted.org/genemail/xmlns/1.0"
+ >
+ <head>
+  <title email:subject="content">${message.title()}</title>
+  <email:header name="to">rcpt@example.com</email:header>
+ </head>
+ <body><p>${message}.</p></body>
+</html>
+'''
+    sender  = StoredSender()
+    manager = Manager(
+      sender   = sender,
+      provider = template(tpl),
+      default  = {'headers': {'from': 'mailfrom@example.com'}},
+      )
+    eml = manager.newEmail()
+    eml['message'] = 'test'
+    # override the UNpredictable generated info...
+    eml.setHeader('date', 'Fri, 13 Feb 2009 23:31:30 -0000')
+    eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
+    eml.includeComponents = ['text']
+    eml.send()
+    self.assertEqual(1, len(sender.emails))
+    out = sender.emails[0]
+    self.assertEqual(out.recipients, ['rcpt@example.com'])
+    self.assertEqual(out.mailfrom, 'mailfrom@example.com')
+
+  #----------------------------------------------------------------------------
+  def test_manager_defaultHeadersCaseInsensitive(self):
+    tpl = '''\
+<html
+ xmlns="http://www.w3.org/1999/xhtml"
+ xmlns:email="http://pythonhosted.org/genemail/xmlns/1.0"
+ >
+ <head>
+  <title email:subject="content">${message.title()}</title>
+  <email:header name="to">rcpt@example.com</email:header>
+ </head>
+ <body><p>${message}.</p></body>
+</html>
+'''
+    sender  = StoredSender()
+    manager = Manager(
+      sender   = sender,
+      provider = template(tpl),
+      default  = {'headers': {'frOM': 'mailfrom@example.com'}},
+      )
+    eml = manager.newEmail()
+    eml['message'] = 'test'
+    # override the UNpredictable generated info...
+    eml.setHeader('date', 'Fri, 13 Feb 2009 23:31:30 -0000')
+    eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
+    eml.includeComponents = ['text']
+    self.assertEqual(eml.getHeader('from'), 'mailfrom@example.com')
 
 #------------------------------------------------------------------------------
 # end of $Id$
