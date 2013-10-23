@@ -346,7 +346,7 @@ def removeCids(text):
 
 #------------------------------------------------------------------------------
 # todo: move this?
-smtp_header_element_upper = ['cc', 'id', 'spf']
+smtp_header_element_upper = ['cc', 'id', 'spf', 'mime']
 def smtpHeaderFormat(h):
   return '-'.join([e.upper() if e in smtp_header_element_upper else e.title()
                    for e in [e.lower() for e in h.split('-')]])
