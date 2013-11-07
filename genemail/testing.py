@@ -69,12 +69,19 @@ def makemsg(msg, submsg):
 #------------------------------------------------------------------------------
 class EmailTestMixin(object):
 
-  mime_comparators = {
+  mime_cmp_factories = {
     'text/html'      : lambda self, ct: self.try_assertXmlEqual,
     'text/xml'       : lambda self, ct: self.try_assertXmlEqual,
     'text/*'         : lambda self, ct: self.assertMultiLineEqual,
     '*/*'            : lambda self, ct: self.assertEqual,
     }
+
+  #----------------------------------------------------------------------------
+  def registerMimeComparator(self, mimetype, comparator):
+    def factory(self, ct):
+      return comparator
+    self.mime_cmp_factories = dict(EmailTestMixin.mime_cmp_factories)
+    self.mime_cmp_factories[mimetype] = factory
 
   #----------------------------------------------------------------------------
   def _parseEmail(self, eml):
@@ -107,10 +114,10 @@ class EmailTestMixin(object):
     except AssertionError: pass
 
   #----------------------------------------------------------------------------
-  def assertEmailContentEqual(self, eml1, eml2, msg=None, mime_comparators=None):
+  def assertEmailContentEqual(self, eml1, eml2, msg=None, mime_cmp_factories=None):
     eml1 = self._parseEmail(eml1)
     eml2 = self._parseEmail(eml2)
-    self._assertEmailContentEqual(eml1, eml2, msg=msg, mc=mime_comparators)
+    self._assertEmailContentEqual(eml1, eml2, msg=msg, mcf=mime_cmp_factories)
 
   #----------------------------------------------------------------------------
   def assertNotEmailContentEqual(self, eml1, eml2, msg=None):
@@ -120,17 +127,17 @@ class EmailTestMixin(object):
     except AssertionError: pass
 
   #----------------------------------------------------------------------------
-  def assertEmailEqual(self, eml1, eml2, msg=None, mime_comparators=None):
+  def assertEmailEqual(self, eml1, eml2, msg=None, mime_cmp_factories=None):
     eml1 = self._parseEmail(eml1)
     eml2 = self._parseEmail(eml2)
     self._assertEmailHeadersEqual(eml1, eml2, msg=msg)
     self._assertEmailStructureEqual(eml1, eml2, msg=msg)
-    self._assertEmailContentEqual(eml1, eml2, msg=msg, mc=mime_comparators)
+    self._assertEmailContentEqual(eml1, eml2, msg=msg, mcf=mime_cmp_factories)
 
   #----------------------------------------------------------------------------
-  def assertNotEmailEqual(self, eml1, eml2, msg=None, mime_comparators=None):
+  def assertNotEmailEqual(self, eml1, eml2, msg=None, mime_cmp_factories=None):
     try:
-      self.assertEmailEqual(eml1, eml2, msg=msg, mime_comparators=mime_comparators)
+      self.assertEmailEqual(eml1, eml2, msg=msg, mime_cmp_factories=mime_cmp_factories)
       self.fail(msg or 'email %r == %r' % (eml1, eml2))
     except AssertionError: pass
 
@@ -147,7 +154,7 @@ class EmailTestMixin(object):
     self.assertMultiLineEqual(str1, str2, msg=msg)
 
   #----------------------------------------------------------------------------
-  def _assertEmailContentEqual(self, msg1, msg2, msg=None, mc=None, context=None):
+  def _assertEmailContentEqual(self, msg1, msg2, msg=None, mcf=None, context=None):
     if context is None:
       context = 'component root'
     self.assertEqual(
@@ -160,7 +167,7 @@ class EmailTestMixin(object):
       context = 'component ' + msg1.get_content_type()
     if not msg1.is_multipart():
       return self._assertEmailPayloadEqual(
-        msg1, msg2, msg=msg, mc=mc, context=context)
+        msg1, msg2, msg=msg, mcf=mcf, context=context)
     msgs1 = msg1.get_payload()
     msgs2 = msg2.get_payload()
     self.assertEqual(
@@ -169,28 +176,28 @@ class EmailTestMixin(object):
     for idx, submsg in enumerate(msgs1):
       sctxt = context + '[' + str(idx) + '] > ' + submsg.get_content_type()
       self._assertEmailContentEqual(
-        submsg, msgs2[idx], msg=msg, mc=mc, context=sctxt)
+        submsg, msgs2[idx], msg=msg, mcf=mcf, context=sctxt)
 
   #----------------------------------------------------------------------------
-  def _assertEmailPayloadEqual(self, msg1, msg2, msg=None, mc=None, context='message'):
+  def _assertEmailPayloadEqual(self, msg1, msg2, msg=None, mcf=None, context='message'):
     # paranoia...
     self.assertFalse(msg1.is_multipart() or msg2.is_multipart())
     self.assertEqual(msg1.get_content_type(), msg2.get_content_type())
     # /paranoia...
     dat1 = msg1.get_payload(decode=True)
     dat2 = msg2.get_payload(decode=True)
-    def getcmp(msg, mc):
-      ret = mc.get(msg.get_content_type())
+    def getcmp(msg, mcf):
+      ret = mcf.get(msg.get_content_type())
       if ret is None:
-        ret = mc.get(msg.get_content_maintype() + '/*')
+        ret = mcf.get(msg.get_content_maintype() + '/*')
       if ret is None:
-        ret = mc.get('*/*')
+        ret = mcf.get('*/*')
       return ret
     pcmp = None
-    if mc is not None:
-      pcmp = getcmp(msg1, mc)
+    if mcf is not None:
+      pcmp = getcmp(msg1, mcf)
     if pcmp is None:
-      pcmp = getcmp(msg1, self.mime_comparators)
+      pcmp = getcmp(msg1, self.mime_cmp_factories)
     self.assertIsNotNone(
       pcmp, 'no comparator for mime-type "%s"' % (msg1.get_content_type(),))
     pcmp = pcmp(self, msg1.get_content_type())
