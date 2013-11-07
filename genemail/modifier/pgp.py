@@ -20,6 +20,15 @@ import logging, asset, email
 
 from .base import Modifier
 
+try:
+  import gnupg
+  __all__ = ('PgpModifier',)
+except ImportError:
+  gnupg = None
+  __all__ = []
+
+#------------------------------------------------------------------------------
+
 log = logging.getLogger(__name__)
 
 #------------------------------------------------------------------------------

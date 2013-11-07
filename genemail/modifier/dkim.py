@@ -10,6 +10,13 @@ from __future__ import absolute_import
 
 from .base import Modifier
 
+try:
+  import dkim
+  __all__ = ('DkimModifier',)
+except ImportError:
+  dkim = None
+  __all__ = []
+
 #------------------------------------------------------------------------------
 class DkimModifier(Modifier):
 
