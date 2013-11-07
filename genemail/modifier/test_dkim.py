@@ -14,7 +14,7 @@ import templatealchemy as ta
 from ..manager import Manager
 from ..sender import StoredSender
 from .. import util, modifier, testing
-from ..test import template, stoptime, unstoptime, withoutfeature
+from ..test import template, stoptime, unstoptime, feature
 
 #------------------------------------------------------------------------------
 class TestDkimModifier(unittest.TestCase, testing.EmailTestMixin):
@@ -30,6 +30,7 @@ class TestDkimModifier(unittest.TestCase, testing.EmailTestMixin):
     unstoptime()
 
   #----------------------------------------------------------------------------
+  @feature('dkim', 'dkim', pkg='dkimpy')
   def test_dkim(self):
     tpl = 'Hello, {{name}}!'
     dkimmod = modifier.DkimModifier(
@@ -78,14 +79,6 @@ From: noreply@example\.com
 Subject: Hello, Joe Schmoe!
 
 Hello, Joe Schmoe!$''')
-
-#------------------------------------------------------------------------------
-# todo: there *must* be a better way to declare that this unit test
-#       depends on the 'pgp' feature, no?...
-try:
-  import dkim
-except ImportError:
-  withoutfeature('dkim', 'dkimpy', TestDkimModifier)
 
 #------------------------------------------------------------------------------
 # end of $Id$

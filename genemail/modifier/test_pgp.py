@@ -12,7 +12,7 @@ import templatealchemy as ta
 from .. import testing
 from ..manager import Manager
 from ..sender import StoredSender
-from ..test import template, stoptime, unstoptime, withoutfeature
+from ..test import template, stoptime, unstoptime, feature
 from .pgp import PgpModifier
 
 moddir = os.path.dirname(os.path.dirname(__file__))
@@ -69,6 +69,7 @@ vJdCbGtFxl8NNYfL4g4FiCTMt7GgumGw7kz4C6V7CTaoDQ==
     unstoptime()
 
   #----------------------------------------------------------------------------
+  @feature('pgp', 'gnupg', pkg='python-gnupg')
   def test_defaults(self):
     tpl = 'Hello, {{name}}!'
     pgpmod = PgpModifier(
@@ -113,6 +114,7 @@ vJdCbGtFxl8NNYfL4g4FiCTMt7GgumGw7kz4C6V7CTaoDQ==
     self.assertEmailEqual(str(adec), str(bdec), msg=msg)
 
   #----------------------------------------------------------------------------
+  @feature('pgp', 'gnupg', pkg='python-gnupg')
   def test_prune_recipients(self):
     tpl = 'Hello, {{name}}!'
     pgpmod = PgpModifier(
@@ -162,14 +164,6 @@ Subject: Hello, Joe Schmoe!
 Hello, Joe Schmoe!
 '''
     self.assertEmailEqual(str(adec), chk, msg=msg)
-
-#------------------------------------------------------------------------------
-# todo: there *must* be a better way to declare that this unit test
-#       depends on the 'pgp' feature, no?...
-try:
-  import gnupg
-except ImportError:
-  withoutfeature('pgp', 'python-gnupg', TestPgpModifier)
 
 #------------------------------------------------------------------------------
 # end of $Id$

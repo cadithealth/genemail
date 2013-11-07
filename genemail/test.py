@@ -43,14 +43,17 @@ def unstoptime():
 
 #------------------------------------------------------------------------------
 
-def withoutfeature(feature, dependency, testclass):
-  def test_feature_missing(self, *args, **kw):
-    sys.stderr.write('*** MODULE "{}" NOT PRESENT - SKIPPING *** '.format(
-      dependency))
-  for attr in dir(testclass):
-    ref = getattr(testclass, attr, None)
-    if attr.startswith('test_') and callable(ref):
-      setattr(testclass, attr, test_feature_missing)
+# todo: i should create a class-level decorator version of this too...
+# todo: it should really inspect the extra_requires clause and derive
+#       the 'pkg' value from that...
+def feature(name, module, pkg=None):
+  if pkg is None:
+    pkg = module
+  try:
+    __import__(module)
+    return lambda func: func
+  except ImportError:
+    return unittest.skip('"{}" feature requires package "{}"'.format(name, pkg))
 
 #------------------------------------------------------------------------------
 class TestEmail(unittest.TestCase):
