@@ -13,6 +13,8 @@ from .manager import Manager
 from .sender import Sender, StoredSender
 from . import util
 
+#------------------------------------------------------------------------------
+
 def eqstrip(val):
   val = val.replace('\r\n', '\n').replace('\r', '\n')
   val = re.sub('[ \t]+', ' ', val)
@@ -23,6 +25,8 @@ def wsstrip(val):
 
 def template(s, renderer='mako'):
   return ta.Template(source='string:' + s, renderer=renderer)
+
+#------------------------------------------------------------------------------
 
 def stoptime(at=None):
   if at is None:
@@ -36,6 +40,17 @@ def stoptime(at=None):
 def unstoptime():
   if hasattr(time, '__original_time__'):
     time.time = time.__original_time__
+
+#------------------------------------------------------------------------------
+
+def withoutfeature(feature, dependency, testclass):
+  def test_feature_missing(self, *args, **kw):
+    sys.stderr.write('*** MODULE "{}" NOT PRESENT - SKIPPING *** '.format(
+      dependency))
+  for attr in dir(testclass):
+    ref = getattr(testclass, attr, None)
+    if attr.startswith('test_') and callable(ref):
+      setattr(testclass, attr, test_feature_missing)
 
 #------------------------------------------------------------------------------
 class TestEmail(unittest.TestCase):
