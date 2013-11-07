@@ -9,6 +9,7 @@
 from .base import *
 from .dkim import *
 from .bcc import *
+from .pgp import *
 
 #------------------------------------------------------------------------------
 # end of $Id$

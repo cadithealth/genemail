@@ -19,13 +19,13 @@ def read(*parts, **kw):
   try:    return open(os.path.join(heredir, *parts)).read()
   except: return kw.get('default', '')
 
-test_requires = [
+test_dependencies = [
   'nose                 >= 1.3.0',
   'coverage             >= 3.5.3',
   'pxml                 >= 0.2.9',
   ]
 
-requires = [
+dependencies = [
   'distribute           >= 0.6.24',
   'TemplateAlchemy      >= 0.1.20',
   'cssutils             >= 0.9.10b1',
@@ -33,7 +33,13 @@ requires = [
   'py-dom-xpath         >= 0.1',
   'html2text            >= 3.200.3',
   'dkimpy               >= 0.5.4',
+  'globre               >= 0.0.5',
+  'asset                >= 0.0.4',
   ]
+
+extras_dependencies = {
+  'pgp'                 : 'python-gnupg >= 0.3.5',
+  }
 
 entrypoints = {
   'console_scripts': [
@@ -65,8 +71,9 @@ setup(
   packages              = find_packages(),
   include_package_data  = True,
   zip_safe              = True,
-  install_requires      = requires,
-  tests_require         = test_requires,
+  install_requires      = dependencies,
+  extras_require        = extras_dependencies,
+  tests_require         = test_dependencies,
   test_suite            = 'genemail',
   entry_points          = entrypoints,
   license               = 'MIT (http://opensource.org/licenses/MIT)',
