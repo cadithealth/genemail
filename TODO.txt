@@ -1,6 +1,23 @@
 * add documentation about:
   * Manager.default
   * Email.structure
+  * Modifiers
   * ... and much more
 
 * add `less` support for CSS via lesscpy
+
+* add ability to add modifiers on a per-email basis
+  ==> maybe controlled/configured by <email:modifier .../> ?...
+  ==> or possibly by email.spec ?...
+
+* add a MIME prolog? eg:
+
+    This is a multi-part message in MIME format.
+
+  *just in case* some email is received by a non-MIME aware reader.
+  (say whaaa?)
+
+* switch to use asset.isstr() -- search for isinstance()...
+
+* add Date header, format:
+    Date: Mon,  4 Nov 2013 23:53:43 +0000 (GMT)
