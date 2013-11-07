@@ -1,2 +1,2 @@
-include *.txt *.rst
-recursive-include docs *.txt *.rst
+include *.txt *.rst *.cfg
+graft genemail/test_data
