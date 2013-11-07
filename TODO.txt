@@ -25,8 +25,6 @@
 * add S/MIME (RFC 5750) modifier for certificate-based encryption
   (makes much more sense in server environments)
 
-* mark dkimpy an optional dependency on feature 'dkim'
-
 * technically, this package is not zip-safe, but *only* for testing
   of the pgp modifier (since it uses gpg, an external program, which
   needs access to the test_data/gpg-* folders). what to do about that?
