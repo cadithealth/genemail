@@ -1,5 +1,4 @@
 *.py[cod]
-.virtualenv
 
 # C extensions
 *.so
@@ -35,4 +34,7 @@ nosetests.xml
 .project
 .pydevproject
 
-envdev
+envdev*
+.virtualenv*
+genemail/test_data/gpg-sender/random_seed
+genemail/test_data/gpg-receiver/random_seed
