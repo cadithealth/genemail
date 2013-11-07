@@ -327,7 +327,7 @@ tent.
   def assertXmlEqual(self, x1, x2, msg=None):
     if self.noxml or pxml is None:
       return self.assertMultiLineEqual(x1, x2, msg=msg)
-    class PxmlXmlTest(pxml.TestMixin, unittest.TestCase):
+    class PxmlXmlTest(pxml.XmlTestMixin, unittest.TestCase):
       def runTest(self): pass
     PxmlXmlTest().assertXmlEqual(x1, x2, msg=msg)
 
