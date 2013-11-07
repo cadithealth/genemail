@@ -25,6 +25,9 @@ following features are built-in:
 * **Support for DKIM email header generation** so that emails that
   are indeed not spam are less likely to be identified as such.
 
+* **Support for PGP email encryption** so that emails can contain
+  sensitive information that should not be visible to the public.
+
 * **Preview data** allows templates to define sample data so that
   email previews can be generated with predefined data and/or dynamic
   data.
@@ -104,10 +107,112 @@ Use genemail as follows:
   #   - have one text/html related attachment (logo.png)
   #   - be DKIM-signed
 
+
 Overview
 ========
 
 TODO: add docs
+
+
+DKIM Signed Email
+=================
+
+TODO: add docs
+
+
+Encrypted Email
+===============
+
+The genemail ``pgp`` optional feature allows you to generate encrypted
+outbound email. It does this using the ``python-gnupg`` package, which
+in turn uses the ``gpg`` external command-line program. Genemail can
+both encrypt and sign the emails, or only encrypt. Steps to generate
+encrypted email:
+
+1. First, create a GPG-home directory with all of the necessary
+keys. For example:
+
+.. code-block:: bash
+
+  # create the directory
+  $ mkdir -p /path/to/gpghome
+  $ chmod 700 /path/to/gpghome
+
+  # for signing, a private key is needed. generate one:
+  $ gpg --homedir /path/to/gpghome --gen-key
+
+  # for encryption, the public key of every recipient of encrypted
+  # emails is needed. do this for every recipient:
+  $ gpg --homedir /path/to/gpghome --import /path/to/recipient/public.key
+
+2. Then, configure genemail to use the
+``genemail.modifier.PgpModifier`` modifier. For example:
+
+.. code-block:: python
+
+  import genemail
+
+  # configure a genemail manager using the modifier
+  manager = genemail.Manager(
+    # ...
+    modifier = genemail.modifier.PgpModifier(
+      sign        = 'noreply@example.com',
+      gpg_options = dict(gnupghome = '/path/to/gpghome'),
+      ),
+    # ...
+    )
+
+PgpModifier takes the following parameters:
+
+* ``sign``: str, optional, default: null
+
+  If specified, it is taken to be the ID or email address of the GPG
+  key to use to sign outbound emails. In this case, either the
+  passphrase must be empty, or you must be using a gpg-agent. The
+  default is null, which disables signing.
+
+* ``add_key``: list(str), optional, default: 'sign-key'
+
+  The `add_key` parameter specifies IDs or email addresses that should
+  be added to the encryption list, but not to the recipient list.
+  This is useful if a global 'backdoor' key is needed. It can also be
+  set to ``'sign-key'`` (the default) which indicates that the signing
+  key should be added (thus the sender can decrypt the sent
+  messages). Set this to null to disable any addition. It can also be
+  a list of values.
+
+* ``prune_keys``: bool, optional, default: true
+
+  If truthy (the default), then the list of email addresses for whom
+  the email is encrypted for is reduced to the set of recipients that
+  have an exactly matching key. If too many addresses are pruned (this
+  can happen if the gpg binary is smarter at matching an email address
+  to a key), then this may need to be set to false -- but beware, if
+  any address cannot be resolved to a key by gpg, then the entire
+  encryption process fails, and the email is not sent.
+
+* ``prune_recipients``: bool, optional, default: false
+
+  If truthy, then encrypted emails will only be sent to the list of
+  addresses that were the result of a `prune_keys` pruning. If they
+  are not pruned, the recipients will receive emails that they cannot
+  read. This is by default false so that it is more obvious that some
+  action needs to be taken (i.e. give the GPG-home directory the
+  appropriate list of keys).
+
+* ``gpg_options``: dict, optional
+
+  This parameter is a collection of parameters passed to gnupg. The
+  only required parameter is `gnupghome`, which is the path to the
+  GPG-home directory. All currently available parameters:
+
+  * ``gnupghome``: str, optional, default: null
+  * ``gpgbinary``: str, optional, default: 'gpg'
+  * ``use_agent``: bool, optional, default: false
+  * ``verbose``: bool, optional, default: false
+  * ``keyring``: str, optional, default: null
+  * ``secret_keyring``: str, optional, default: null
+  * ``options``: list(str), optional, default: null
 
 
 Unit Testing
@@ -121,7 +226,7 @@ to compare HTML output):
 
   import unittest, pxml, genemail, genemail.testing
 
-  class AppTest(genemail.testing.EmailTestMixin, pxml.TestMixin, unittest.TestCase):
+  class AppTest(genemail.testing.EmailTestMixin, pxml.XmlTestMixin, unittest.TestCase):
 
     def setUp(self):
       super(AppTest, self).setUp()
