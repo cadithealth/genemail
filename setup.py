@@ -32,13 +32,13 @@ dependencies = [
   'cssselect            >= 0.7.1',
   'py-dom-xpath         >= 0.1',
   'html2text            >= 3.200.3',
-  'dkimpy               >= 0.5.4',
   'globre               >= 0.0.5',
   'asset                >= 0.0.4',
   ]
 
 extras_dependencies = {
   'pgp'                 : 'python-gnupg >= 0.3.5',
+  'dkim'                : 'dkimpy       >= 0.5.4',
   }
 
 entrypoints = {

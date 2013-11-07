@@ -8,8 +8,6 @@
 
 from __future__ import absolute_import
 
-import dkim
-
 from .base import Modifier
 
 #------------------------------------------------------------------------------
@@ -53,6 +51,7 @@ class DkimModifier(Modifier):
       true if the l= tag should be included to indicate body length
       (defaults to the default dkimpy package value)
     '''
+    import dkim
     self.key      = privateKey
     self.domain   = domain
     self.selector = selector
@@ -71,6 +70,7 @@ class DkimModifier(Modifier):
 
   #----------------------------------------------------------------------------
   def modify(self, mailfrom, recipients, data):
+    import dkim
     if not isinstance(data, basestring):
       data = data.as_string()
     dkimhdr = dkim.sign(data, self.selector, self.domain, self.key,

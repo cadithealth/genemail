@@ -6,6 +6,8 @@
 # copy: (C) Copyright 2013 Cadit Inc., All Rights Reserved.
 #------------------------------------------------------------------------------
 
+from __future__ import absolute_import
+
 import sys, unittest, re
 import templatealchemy as ta
 
@@ -15,7 +17,7 @@ from .. import util, modifier, testing
 from ..test import template, stoptime, unstoptime, withoutfeature
 
 #------------------------------------------------------------------------------
-class TestEmailModifier(unittest.TestCase, testing.EmailTestMixin):
+class TestDkimModifier(unittest.TestCase, testing.EmailTestMixin):
 
   maxDiff = None
 
@@ -76,6 +78,14 @@ From: noreply@example\.com
 Subject: Hello, Joe Schmoe!
 
 Hello, Joe Schmoe!$''')
+
+#------------------------------------------------------------------------------
+# todo: there *must* be a better way to declare that this unit test
+#       depends on the 'pgp' feature, no?...
+try:
+  import dkim
+except ImportError:
+  withoutfeature('dkim', 'dkimpy', TestDkimModifier)
 
 #------------------------------------------------------------------------------
 # end of $Id$
