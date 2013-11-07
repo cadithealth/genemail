@@ -18,3 +18,11 @@
   (say whaaa?)
 
 * switch to use asset.isstr() -- search for isinstance()...
+
+* the PgpModifier implements PGP/MIME (RFC 3156), add support for:
+  * inline-PGP
+
+* add S/MIME (RFC 5750) modifier for certificate-based encryption
+  (makes much more sense in server environments)
+
+* mark dkimpy an optional dependency on feature 'dkim'
