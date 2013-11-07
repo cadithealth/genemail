@@ -22,7 +22,7 @@ def read(*parts, **kw):
 test_requires = [
   'nose                 >= 1.3.0',
   'coverage             >= 3.5.3',
-  'pxml                 >= 0.2.7',
+  'pxml                 >= 0.2.9',
   ]
 
 requires = [
