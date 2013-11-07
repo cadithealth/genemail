@@ -18,6 +18,3 @@
   (say whaaa?)
 
 * switch to use asset.isstr() -- search for isinstance()...
-
-* add Date header, format:
-    Date: Mon,  4 Nov 2013 23:53:43 +0000 (GMT)

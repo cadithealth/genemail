@@ -6,7 +6,7 @@
 # copy: (C) Copyright 2013 Cadit Inc., All Rights Reserved.
 #------------------------------------------------------------------------------
 
-import sys, unittest, re
+import sys, unittest, re, time
 import templatealchemy as ta
 
 from .manager import Manager
@@ -24,10 +24,31 @@ def wsstrip(val):
 def template(s, renderer='mako'):
   return ta.Template(source='string:' + s, renderer=renderer)
 
+def stoptime(at=None):
+  if at is None:
+    at = time.time()
+  at = float(at)
+  if not hasattr(time, '__original_time__'):
+    time.__original_time__ = time.time
+  time.time = lambda: at
+  return at
+
+def unstoptime():
+  if hasattr(time, '__original_time__'):
+    time.time = time.__original_time__
+
 #------------------------------------------------------------------------------
 class TestEmail(unittest.TestCase):
 
   maxDiff = None
+
+  #----------------------------------------------------------------------------
+  def setUp(self):
+    stoptime(1234567890.0) # == 2009-02-13T23:31:30Z 
+
+  #----------------------------------------------------------------------------
+  def tearDown(self):
+    unstoptime()
 
   #----------------------------------------------------------------------------
   def assertXmlEqual(self, val, chk):
@@ -283,7 +304,6 @@ Subject: This Is A Test\n\n''' + tchk
 '''
     eml = Manager(sender=StoredSender(), provider=template(tpl)).newEmail()
     # override the UN-predictable generated info...
-    eml.setHeader('Date', 'Fri, 13 Feb 2009 23:31:30 -0000')
     eml.setHeader('Message-ID', '<1234567890@genemail.example.com>')
     eml.includeComponents = ['text']
     eml['message'] = 'This is a test'
@@ -378,7 +398,6 @@ Subject: This Is A Test\n\n''' + tchk
 '''
     eml = Manager(sender=StoredSender(), provider=template(tpl)).newEmail()
     # override the UN-predictable generated info...
-    eml.setHeader('Date', 'Fri, 13 Feb 2009 23:31:30 -0000')
     eml.setHeader('Message-ID', '<1234567890@genemail.example.com>')
     eml.includeComponents = ['text']
     eml['message'] = 'This is a test'
@@ -489,7 +508,6 @@ Content-ID: <smiley.png>
 
     eml = Manager(sender=StoredSender(), provider=template(tpl)).newEmail()
     # override the UNpredictable generated info...
-    eml.setHeader('Date', 'Fri, 13 Feb 2009 23:31:30 -0000')
     eml.setHeader('Message-ID', '<1234567890@genemail.example.com>')
     eml.boundary = 'genemail.test'
     eml['message'] = 'This and that'
@@ -506,7 +524,6 @@ Content-ID: <smiley.png>
     eml1.setHeader('To', 'test@example.com')
     eml1.setHeader('From', 'noreply@example.com')
     eml1.setHeader('Bcc', 'bcc@example.com')
-    eml1.setHeader('Date', 'Fri, 13 Feb 2009 23:31:30 -0000')
     eml1.setHeader('Message-ID', '<1234567890@genemail.example.com>')
     eml1.includeComponents = ['text']
     eml1.send()
@@ -517,7 +534,6 @@ Content-ID: <smiley.png>
     eml2 = man.newEmail()
     eml2.setHeader('To', 'test@example.com')
     eml2.setHeader('From', 'noreply@example.com')
-    eml2.setHeader('Date', 'Fri, 23 Feb 2009 23:32:30 -0000')
     eml2.setHeader('Message-ID', '<2234567890@genemail.example.com>')
     eml2.includeComponents = ['text']
     eml2.send()

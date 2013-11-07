@@ -9,13 +9,10 @@
 
 from __future__ import absolute_import
 
-__all__ = ('Email',)
-
 import re, copy, base64, mimetypes
 import xml.etree.ElementTree as ET
 import html2text
 from templatealchemy.util import adict
-
 import email.Encoders, email.Message, email.MIMEMultipart, email.MIMEText
 import email.MIMEImage, email.Utils
 
@@ -23,6 +20,7 @@ from . import util
 from .idict import idict
 
 #------------------------------------------------------------------------------
+__all__ = ('Email',)
 xmlns = 'http://pythonhosted.org/genemail/xmlns/1.0'
 htmlns = util.htmlns
 class MissingHeader(Exception): pass
@@ -379,7 +377,8 @@ class Email(object):
     curheaders.update(self.getTemplateHeaders())
     curheaders.update(self.headers)
     defaultHeaders = {
-      'Subject':     lambda: self.getSubject(),
+      'Subject' : lambda: self.getSubject(),
+      'Date'    : lambda: email.Utils.formatdate(),
       }
     for name, value in defaultHeaders.items():
       if name not in curheaders:
