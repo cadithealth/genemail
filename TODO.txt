@@ -28,3 +28,5 @@
 * technically, this package is not zip-safe, but *only* for testing
   of the pgp modifier (since it uses gpg, an external program, which
   needs access to the test_data/gpg-* folders). what to do about that?
+
+* add a Modifier base class parameter 'failaction' = {'abort', 'ignore'}
