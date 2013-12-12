@@ -3,8 +3,14 @@ ChangeLog
 =========
 
 
-0.1.10
-======
+v0.1.11
+=======
+
+* Added "genemail_format" rendering parameter
+
+
+v0.1.10
+=======
 
 * First tagged release
 * Added encryption modifier (using GPG)
