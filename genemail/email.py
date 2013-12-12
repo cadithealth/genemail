@@ -174,12 +174,14 @@ class Email(object):
 
   #----------------------------------------------------------------------------
   def getTemplateXml(self, fallbackToNone=True):
+    params = dict(self.params)
+    params.update({'genemail_format': 'xml'})
     for fmt in ('xml', 'xhtml', 'html'):
       if fmt in self.template.meta.formats:
-        return util.parseXml(self.template.render(fmt, self.params))
+        return util.parseXml(self.template.render(fmt, params))
     if fallbackToNone:
       try:
-        return util.parseXml(self.template.render(None, self.params))
+        return util.parseXml(self.template.render(None, params))
       except ET.ParseError:
         return None
     return None
@@ -227,7 +229,9 @@ class Email(object):
   def getTemplateStyle(self):
     ret  = []
     if 'css' in self.template.meta.formats:
-      ret.append(self.template.render('css', self.params))
+      params = dict(self.params)
+      params.update({'genemail_format': 'css'})
+      ret.append(self.template.render('css', params))
     xdoc = self.getTemplateXml()
     if xdoc is None:
       return ' '.join(ret)
@@ -237,7 +241,7 @@ class Email(object):
     return ' '.join(ret)
 
   #----------------------------------------------------------------------------
-  def getHtml(self, standalone=False):
+  def getHtml(self, standalone=False, extraparams=None):
     '''
     Returns the raw HTML that would be generated if the email were
     sent with the current settings. Use :meth:`send` to actually send
@@ -247,11 +251,16 @@ class Email(object):
     # todo: what if 'html' is not in `includeComponents`?
 
     if standalone:
-      ret = self.getHtml()
+      ret = self.getHtml(extraparams=extraparams)
       return self.inlineCidAttachments(ret)
 
+    params = dict(self.params)
+    params.update({'genemail_format': 'html'})
+    if extraparams:
+      params.update(extraparams)
+
     # todo: try alternative formats if 'html' isn't available? eg xhtml...
-    html = self.template.render('html', self.params)
+    html = self.template.render('html', params)
 
     # todo: this double roundtrip of parse/serialize html is ridiculous
 
@@ -300,12 +309,14 @@ class Email(object):
     :meth:`send` to actually send the email.
     '''
     # todo: what if 'text' is not in `includeComponents`?
+    params = dict(self.params)
+    params.update({'genemail_format': 'text'})
     if 'text' in self.template.meta.formats:
-      return self.template.render('text', self.params)
+      return self.template.render('text', params)
     try:
-      html = self.getHtml()
+      html = self.getHtml(extraparams={'genemail_format': 'text'})
     except Exception:
-      return self.template.render(None, self.params)
+      return self.template.render(None, params)
     # todo: it would be interesting to be able to configure html2text to only
     #       put it footnotes for IMG tags that had non-"cid:" image references...
     text = html2text.html2text(html)
@@ -339,6 +350,8 @@ class Email(object):
     if 'subject' in self.headers:
       return self.headers['subject']
     if 'subject' in self.template.meta.formats:
+      params = dict(self.params)
+      params.update({'genemail_format': 'subject'})
       # todo: check subject encoding?...
       return self.template.render('subject', self.params)
     # todo: what if there is no XML format?...
