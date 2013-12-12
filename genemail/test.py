@@ -6,7 +6,7 @@
 # copy: (C) Copyright 2013 Cadit Inc., All Rights Reserved.
 #------------------------------------------------------------------------------
 
-import sys, unittest, re, time
+import sys, unittest, re, time, pkg_resources
 import templatealchemy as ta
 
 from .manager import Manager
@@ -44,16 +44,12 @@ def unstoptime():
 #------------------------------------------------------------------------------
 
 # todo: i should create a class-level decorator version of this too...
-# todo: it should really inspect the extra_requires clause and derive
-#       the 'pkg' value from that...
-def feature(name, module, pkg=None):
-  if pkg is None:
-    pkg = module
-  try:
-    __import__(module)
-    return lambda func: func
-  except ImportError:
-    return unittest.skip('"{}" feature requires package "{}"'.format(name, pkg))
+def extrafeature(name):
+  dist = pkg_resources.get_distribution('genemail')
+  for pkg in dist.requires(extras=[name]):
+    if not pkg_resources.working_set.find(pkg):
+      return unittest.skip('"{}" feature requires package "{}"'.format(name, pkg))
+  return lambda func: func
 
 #------------------------------------------------------------------------------
 class TestEmail(unittest.TestCase):

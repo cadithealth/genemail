@@ -14,7 +14,7 @@ import templatealchemy as ta
 from ..manager import Manager
 from ..sender import StoredSender
 from .. import util, modifier, testing
-from ..test import template, stoptime, unstoptime, feature
+from ..test import template, stoptime, unstoptime, extrafeature
 
 #------------------------------------------------------------------------------
 class TestDkimModifier(unittest.TestCase, testing.EmailTestMixin):
@@ -30,7 +30,7 @@ class TestDkimModifier(unittest.TestCase, testing.EmailTestMixin):
     unstoptime()
 
   #----------------------------------------------------------------------------
-  @feature('dkim', 'dkim', pkg='dkimpy')
+  @extrafeature('dkim')
   def test_dkim(self):
     tpl = 'Hello, {{name}}!'
     dkimmod = modifier.DkimModifier(

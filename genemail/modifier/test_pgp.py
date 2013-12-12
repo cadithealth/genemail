@@ -12,7 +12,7 @@ import templatealchemy as ta
 from .. import testing
 from ..manager import Manager
 from ..sender import StoredSender
-from ..test import template, stoptime, unstoptime, feature
+from ..test import template, stoptime, unstoptime, extrafeature
 from .pgp import PgpModifier
 
 moddir = os.path.dirname(os.path.dirname(__file__))
@@ -69,7 +69,7 @@ vJdCbGtFxl8NNYfL4g4FiCTMt7GgumGw7kz4C6V7CTaoDQ==
     unstoptime()
 
   #----------------------------------------------------------------------------
-  @feature('pgp', 'gnupg', pkg='python-gnupg')
+  @extrafeature('pgp')
   def test_defaults(self):
     tpl = 'Hello, {{name}}!'
     pgpmod = PgpModifier(
@@ -114,7 +114,7 @@ vJdCbGtFxl8NNYfL4g4FiCTMt7GgumGw7kz4C6V7CTaoDQ==
     self.assertEmailEqual(str(adec), str(bdec), msg=msg)
 
   #----------------------------------------------------------------------------
-  @feature('pgp', 'gnupg', pkg='python-gnupg')
+  @extrafeature('pgp')
   def test_prune_recipients(self):
     tpl = 'Hello, {{name}}!'
     pgpmod = PgpModifier(
