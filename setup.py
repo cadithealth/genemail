@@ -23,7 +23,7 @@ test_dependencies = [
   'nose                 >= 1.3.0',
   'coverage             >= 3.5.3',
   'pxml                 >= 0.2.9',
-  ]
+]
 
 dependencies = [
   'distribute           >= 0.6.24',
@@ -34,18 +34,18 @@ dependencies = [
   'html2text            >= 3.200.3',
   'globre               >= 0.0.5',
   'asset                >= 0.0.4',
-  ]
+]
 
 extras_dependencies = {
   'pgp'                 : 'python-gnupg >= 0.3.5',
   'dkim'                : 'dkimpy       >= 0.5.4',
-  }
+}
 
 entrypoints = {
   'console_scripts': [
     'genemail           = genemail.cli:main',
-    ],
-  }
+  ],
+}
 
 classifiers = [
   'Development Status :: 4 - Beta',
@@ -56,7 +56,7 @@ classifiers = [
   'Natural Language :: English',
   'License :: OSI Approved :: MIT License',
   'License :: Public Domain',
-  ]
+]
 
 setup(
   name                  = 'genemail',
@@ -77,7 +77,7 @@ setup(
   test_suite            = 'genemail',
   entry_points          = entrypoints,
   license               = 'MIT (http://opensource.org/licenses/MIT)',
-  )
+)
 
 #------------------------------------------------------------------------------
 # end of $Id$
