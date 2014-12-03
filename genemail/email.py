@@ -9,12 +9,16 @@
 
 from __future__ import absolute_import
 
-import re, copy, base64, mimetypes
+import re
+import copy
+import base64
+import mimetypes
 import xml.etree.ElementTree as ET
 import html2text
 from templatealchemy.util import adict
 import email.Encoders, email.Message, email.MIMEMultipart, email.MIMEText
 import email.MIMEImage, email.Utils
+import uuid
 
 from . import util
 from .idict import idict
@@ -373,6 +377,22 @@ class Email(object):
     return self._cleanSubject(self.getText())
 
   #----------------------------------------------------------------------------
+  def getMessageID(self, from_):
+    '''
+    Returns the ``Message-ID`` header of the email that would be
+    generated if it were sent with the current settings. If no
+    message-id is present, one is generated based on the domain of the
+    `from_` parameter.
+    '''
+
+    if 'message-id' in self.headers:
+      return self.headers['message-id']
+    return '<{msgid}@{domain}>'.format(
+      msgid  = str(uuid.uuid4()),
+      domain = 'localhost' if '@' not in from_ else from_.split('@', 1)[1],
+    )
+
+  #----------------------------------------------------------------------------
   def getAttachments(self):
     atts = {att.name: att for att in self.getTemplateAttachments()}
     for att in self.attachments:
@@ -392,7 +412,7 @@ class Email(object):
     defaultHeaders = {
       'Subject' : lambda: self.getSubject(),
       'Date'    : lambda: email.Utils.formatdate(),
-      }
+    }
     for name, value in defaultHeaders.items():
       if name not in curheaders:
         curheaders[name] = value() if callable(value) else value
@@ -607,6 +627,9 @@ class Email(object):
       active ``From`` header. If not specified, the address will be
       extracted from the ``From`` header.
 
+      This parameter's domain will also be used to generate the
+      ``Message-ID`` header, if it is not specified.
+
     recipients : { str, list(str) }, optional
 
       Email addresses to send this email to, on the SMTP protocol
@@ -628,6 +651,8 @@ class Email(object):
         raise MissingHeader('email destination ("to") not specified')
     elif isinstance(recipients, basestring):
       recipients = [recipients]
+    if 'Message-ID' not in hdrs:
+      hdrs['Message-ID'] = self.getMessageID(mailfrom)
     data = self._getMimeMessage(hdrs)
     if self.manager.modifier:
       mailfrom, recipients, data = self.manager.modifier.modify(
