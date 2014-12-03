@@ -136,6 +136,7 @@ class DebugSender(StoredSender):
   * `from`:       email "From" header - not used by SMTP
   * `to`:         email "To" header - not used by SMTP
   * `date`:       email "Date" header
+  * `message-id`: email "Message-ID" header
   * `subject`:    email "Subject" header
   * `plain`:      text/plain version of the email (or None)
   * `html`:       text/html version of the email (or None)
@@ -146,11 +147,12 @@ class DebugSender(StoredSender):
   def send(self, mailfrom, recipients, message):
     eml = adict(mailfrom=mailfrom, recipients=recipients, message=message)
     mime = email.parser.Parser().parsestr(message)
-    eml['mime']    = mime
-    eml['from']    = mime.get('from')
-    eml['to']      = mime.get('to')
-    eml['date']    = mime.get('date')
-    eml['subject'] = mime.get('subject')
+    eml['mime']        = mime
+    eml['from']        = mime.get('from')
+    eml['to']          = mime.get('to')
+    eml['date']        = mime.get('date')
+    eml['message-id']  = mime.get('message-id')
+    eml['subject']     = mime.get('subject')
     for part in mime.walk():
       ct = part.get_content_type()
       if not ct.startswith('text/'):
