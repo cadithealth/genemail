@@ -3,6 +3,14 @@ ChangeLog
 =========
 
 
+v0.1.12
+=======
+
+* Added override of "Message-ID" header to be based on `mailfrom`
+  domain (overrideable by setting Email.setHeader or generating in
+  template)
+
+
 v0.1.11
 =======
 
