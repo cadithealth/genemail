@@ -1,3 +1,15 @@
+* preserve XML-based comments in output html... "if in the input, put in the output"
+  ==> make optional!
+  ==> maybe add special syntax for having both be possible?, eg:
+        <email:comment>the comment</email:comment>
+      becomes
+        <!-- the comment -->
+
+* adding two "To" email headers does not result in two recipients... eg:
+     <email:header name="To">a@example.com</email:header>
+     <email:header name="To">b@example.com</email:header>
+  results in 'To: a@example.com' instead of 'To: a@example.com, b@example.com'
+
 * add documentation about:
   * Manager.default
   * Email.structure
@@ -29,4 +41,13 @@
   of the pgp modifier (since it uses gpg, an external program, which
   needs access to the test_data/gpg-* folders). what to do about that?
 
+* support directproject.org?...
+
 * add a Modifier base class parameter 'failaction' = {'abort', 'ignore'}
+
+* if 'Date' header is not a str, render it:
+    int => as epoch
+    tuple => as timetuple
+    datetime => as datetime
+
+* use unittest.Skip(...) for unittests that skip...
