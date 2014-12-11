@@ -30,6 +30,16 @@ htmlns = util.htmlns
 class MissingHeader(Exception): pass
 
 #------------------------------------------------------------------------------
+class AutoCachingDict(dict):
+  def get(self, key, default=None):
+    if key in self:
+      return self[key]
+    if callable(default):
+      default = default()
+    self[key] = default
+    return default
+
+#------------------------------------------------------------------------------
 class Email(object):
 
   DEFAULTS = dict(
@@ -87,7 +97,7 @@ class Email(object):
       default = adict(self.DEFAULTS)
     for attr in self.DEFAULTS.keys():
       setattr(self, attr, copy.deepcopy(getattr(default, attr, None)))
-
+    self.params['cache'] = AutoCachingDict()
     # self.attachmentTable    = None
     # for key, val in self.provider.getMap('headers', {}).items():
     #   self.headers[key] = val

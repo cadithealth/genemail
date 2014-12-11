@@ -1075,6 +1075,98 @@ END:VCALENDAR
     eml.includeComponents = ['text']
     self.assertEqual(eml.getHeader('from'), 'mailfrom@example.com')
 
+  #----------------------------------------------------------------------------
+  def test_multipass_nocache(self):
+    tpl = '<html><body>The count is: ${getCount()}</body></html>'
+    manager = Manager(sender=StoredSender(), provider=template(tpl))
+    eml = manager.newEmail()
+    class Counter():
+      def __init__(self): self.count = 0
+      def inc(self):
+        self.count += 1
+        return self.count
+    counter = Counter()
+    eml['getCount'] = counter.inc
+    # override the UNpredictable generated info...
+    eml.setHeader('date', 'Fri, 13 Feb 2009 23:31:30 -0000')
+    eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
+    eml.boundary = 'genemail.test'
+    eml.send(mailfrom='mailfrom@example.com', recipients='rcpt@example.com')
+    self.assertEqual(len(manager.sender.emails), 1)
+    # TODO: reduce this by caching by "template/genemail_format" ...!!!...
+    self.assertEqual(counter.count, 9)
+    out = manager.sender.emails[0]
+
+    chk = '''\
+Content-Type: multipart/alternative; boundary="==genemail.test-alt-2=="
+MIME-Version: 1.0
+Date: Fri, 13 Feb 2009 23:31:30 -0000
+Message-ID: <1234567890@@genemail.example.com>
+Subject: The count is: 3
+
+--==genemail.test-alt-2==
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+The count is: 5
+
+--==genemail.test-alt-2==
+MIME-Version: 1.0
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+<html xmlns="http://www.w3.org/1999/xhtml"><body>The count is: 7</body></html>
+--==genemail.test-alt-2==--
+'''
+
+    self.assertMimeXmlEqual(out['message'], chk)
+
+  #----------------------------------------------------------------------------
+  def test_multipass_cache(self):
+    tpl = '<html><body>The count is: ${cache.get("c", lambda:getCount())}</body></html>'
+    manager = Manager(sender=StoredSender(), provider=template(tpl))
+    eml = manager.newEmail()
+    class Counter():
+      def __init__(self): self.count = 0
+      def inc(self):
+        self.count += 1
+        return self.count
+    counter = Counter()
+    eml['getCount'] = counter.inc
+    # override the UNpredictable generated info...
+    eml.setHeader('date', 'Fri, 13 Feb 2009 23:31:30 -0000')
+    eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
+    eml.boundary = 'genemail.test'
+    eml.send(mailfrom='mailfrom@example.com', recipients='rcpt@example.com')
+    self.assertEqual(len(manager.sender.emails), 1)
+    self.assertEqual(counter.count, 1)
+    out = manager.sender.emails[0]
+
+    chk = '''\
+Content-Type: multipart/alternative; boundary="==genemail.test-alt-2=="
+MIME-Version: 1.0
+Date: Fri, 13 Feb 2009 23:31:30 -0000
+Message-ID: <1234567890@@genemail.example.com>
+Subject: The count is: 1
+
+--==genemail.test-alt-2==
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+The count is: 1
+
+--==genemail.test-alt-2==
+MIME-Version: 1.0
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+<html xmlns="http://www.w3.org/1999/xhtml"><body>The count is: 1</body></html>
+--==genemail.test-alt-2==--
+'''
+    self.assertMimeXmlEqual(out['message'], chk)
+
 #------------------------------------------------------------------------------
 # end of $Id$
 #------------------------------------------------------------------------------
