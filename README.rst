@@ -39,6 +39,13 @@ following features are built-in:
   significant email headers, structure and content are the same.
 
 
+Project
+=======
+
+* Homepage: https://github.com/cadithealth/genemail
+* Bugs: https://github.com/cadithealth/genemail/issues
+
+
 TL;DR
 =====
 
