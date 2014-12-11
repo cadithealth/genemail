@@ -3,6 +3,12 @@ ChangeLog
 =========
 
 
+v0.1.13
+=======
+
+* Added `cache` template parameter for per-email-instance value caching
+
+
 v0.1.12
 =======
 
