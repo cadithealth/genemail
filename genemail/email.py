@@ -56,12 +56,12 @@ class Email(object):
           {'mime:related; type="text/html"': [
             'email:html',
             {'mime:attachments': 'email:attachments; cid=True'},
-            ]},
           ]},
+        ]},
         {'mime:attachments': 'email:attachments; cid=False'},
-        ]
+      ]
 
-      },
+    },
     params               = {},
     attachments          = [],
     headers              = idict(),
@@ -74,7 +74,7 @@ class Email(object):
     encoding             = None,
     boundary             = None,
     minimalMime          = True,
-    )
+  )
 
   #----------------------------------------------------------------------------
   def __init__(self, manager, name, provider=None, default=None):
@@ -223,7 +223,7 @@ class Email(object):
         contentType = node.get('content-type', None),
         value       = node.get('value', None) or node.text,
         cid         = node.get('cid', 'false').lower() == 'true',
-        )
+      )
       if node.get('encoding', None) == 'base64':
         att.value = base64.b64decode(att.value)
       atts[att.name] = att
