@@ -127,6 +127,38 @@ DKIM Signed Email
 TODO: add docs
 
 
+Per-Email Value Caching
+=======================
+
+When genemail renders a typical email with HTML, plain-text, subjects,
+and headers all being supplied by the same template, it by default
+evaluates the template many times with different ``genemail_format``
+values and different output renderings. This can be a problem, for
+example, if the template calls out to dynamically generate content
+that should only be evaluated once per email such as a pixel tracker.
+
+To solve this, genemail inserts a default parameter named ``cache``
+which is an "auto-caching dict". The difference between a standard
+`dict` class and the `cache` parameter is that the `.get` method will
+populate itself with the default value if the specified key does not
+exist. Furthermore, if the default value is a callable, it will first
+call it (with no arguments) before caching it.
+
+The following example makes use of a `makeUniqueUrl()` function that
+can be used to track clicks in the email on a per-email basis. If it
+did not use the `cache` object, `makeUniqueUrl()` would be called
+multiple times per email.
+
+.. code-block:: mako
+
+  <p>
+   Please click on the link below:
+   <a href="${cache.get('myCacheKey', lambda: makeUniqueUrl())}">click me!</a>
+  </p>
+
+Note that this cache is a *per-email-instance* cache.
+
+
 Encrypted Email
 ===============
 
