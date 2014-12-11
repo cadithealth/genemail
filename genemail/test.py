@@ -109,19 +109,18 @@ class TestEmail(unittest.TestCase):
       category=DeprecationWarning,
       module='cssutils.css.cssstyledeclaration',
       lineno=598,
-      )
+    )
     xdoc = util.parseXml(html)
     xdoc = util.inlineHtmlStyling(xdoc, css)
     out  = util.serializeHtml(xdoc)
-    self.assertXmlEqual('''\
+    self.assertXmlEqual(out, '''\
 <html xmlns="http://www.w3.org/1999/xhtml">
   <body>
     <p class="f" style="background: #042d5a">first</p>
     <p style="background: #666">second</p>
   </body>
 </html>
-''',
-                     out)
+''')
 
   #----------------------------------------------------------------------------
   def test_reduce2ascii_is_needed(self):
@@ -134,12 +133,12 @@ class TestEmail(unittest.TestCase):
   #----------------------------------------------------------------------------
   def test_reduce2ascii(self):
     from .util import reduce2ascii as r2a
-    self.assertEqual('this => that', r2a(u'this \u21d2 that'))
-    self.assertEqual('this <- that', r2a(u'this \u2190 that'))
-    self.assertEqual('this <= that', r2a(u'this \u21e6 that'))
+    self.assertEqual(r2a(u'this \u21d2 that'), 'this => that')
+    self.assertEqual(r2a(u'this \u2190 that'), 'this <- that')
+    self.assertEqual(r2a(u'this \u21e6 that'), 'this <= that')
     self.assertEqual(
-      '->=>->=>=>->|->->|->=>>->|=>~>->>->',
-      r2a(u'\u2192\u21d2\u21ac\u21c9\u21e8\u21e5\u21e2\u21aa\u21a6\u21f6\u21a3\u21f0\u219d\u21a0\u21fe'))
+      r2a(u'\u2192\u21d2\u21ac\u21c9\u21e8\u21e5\u21e2\u21aa\u21a6\u21f6\u21a3\u21f0\u219d\u21a0\u21fe'),
+      '->=>->=>=>->|->->|->=>>->|=>~>->>->')
 
   #----------------------------------------------------------------------------
   def test_callingPkgName(self):
@@ -165,7 +164,7 @@ class TestEmail(unittest.TestCase):
     chk = 'This Is A Test'
     eml = Manager(sender=StoredSender(), provider=template(tpl)).newEmail()
     eml['message'] = 'This is a test'
-    self.assertEqual(chk, eml.getSubject())
+    self.assertEqual(eml.getSubject(), chk)
     # TODO: ensure share="content" works... (it doesn't currently...)
 
   #----------------------------------------------------------------------------
@@ -198,8 +197,8 @@ class TestEmail(unittest.TestCase):
 '''
     eml = Manager(sender=StoredSender(), provider=template(tpl)).newEmail()
     eml['message'] = 'This & that'
-    self.assertEqual(schk, eml.getSubject())
-    self.assertXmlEqual(hchk, eml.getHtml())
+    self.assertEqual(eml.getSubject(), schk)
+    self.assertXmlEqual(eml.getHtml(), hchk)
 
   #----------------------------------------------------------------------------
   def test_subject_attribute(self):
@@ -219,7 +218,7 @@ class TestEmail(unittest.TestCase):
     chk = 'This Is A Test'
     eml = Manager(sender=StoredSender(), provider=template(tpl)).newEmail()
     eml['message'] = 'This is a test'
-    self.assertEqual(chk, eml.getSubject())
+    self.assertEqual(eml.getSubject(), chk)
 
   #----------------------------------------------------------------------------
   def test_subject_maxlength(self):
@@ -241,12 +240,12 @@ class TestEmail(unittest.TestCase):
     man.default.maxSubjectLength = 20
     eml = man.newEmail()
     eml['message'] = 'This is a test of capping the subject length'
-    self.assertEqual(chk, eml.getSubject())
+    self.assertEqual(eml.getSubject(), chk)
     chk2 = 'This [...]'
     eml2 = man.newEmail()
     eml2.maxSubjectLength = 10
     eml2['message'] = 'This is a test of capping the subject length'
-    self.assertEqual(chk2, eml2.getSubject())
+    self.assertEqual(eml2.getSubject(), chk2)
 
   #----------------------------------------------------------------------------
   def test_subject_snip(self):
@@ -269,7 +268,7 @@ class TestEmail(unittest.TestCase):
     man.default.snipIndicator = '[...snip...]'
     eml = man.newEmail()
     eml['message'] = 'This is a test of changing the snip indicator'
-    self.assertEqual(chk, eml.getSubject())
+    self.assertEqual(eml.getSubject(), chk)
 
   #----------------------------------------------------------------------------
   def test_simpleEmail_textOnly(self):
@@ -322,13 +321,14 @@ Subject: This Is A Test\n\n''' + tchk
     eml.includeComponents = ['text']
     eml['message'] = 'This is a test'
     eml.send()
-    self.assertEqual(1, len(eml.manager.sender.emails))
+    self.assertEqual(len(eml.manager.sender.emails), 1)
     out = eml.manager.sender.emails[0]
-    self.assertMultiLineEqual(tchk, eml.getText())
-    self.assertXmlEqual(hchk, eml.getHtml())
-    self.assertMultiLineEqual(etchk, out['message'])
-    self.assertEqual(sorted(['test@example.com', 'foo@example.com']),
-                     sorted(out['recipients']))
+    self.assertMultiLineEqual(eml.getText(), tchk)
+    self.assertXmlEqual(eml.getHtml(), hchk)
+    self.assertMultiLineEqual(out['message'], etchk)
+    self.assertEqual(
+      sorted(out['recipients']),
+      sorted(['test@example.com', 'foo@example.com']))
 
   #----------------------------------------------------------------------------
   def test_cidCleanup(self):
@@ -361,7 +361,7 @@ Also sent to: foo@example.com.
 '''
     eml = Manager(sender=StoredSender(), provider=template(tpl)).newEmail()
     eml['message'] = 'This is a test'
-    self.assertMultiLineEqual(chk, eml.getText())
+    self.assertMultiLineEqual(eml.getText(), chk)
 
   #----------------------------------------------------------------------------
   def test_inlineStyling(self):
@@ -416,9 +416,9 @@ Subject: This Is A Test\n\n''' + tchk
     eml.includeComponents = ['text']
     eml['message'] = 'This is a test'
     eml.send()
-    #self.assertMultiLineEqual(etchk, eml.manager.sender.emails[0]['message'])
-    #self.assertMultiLineEqual(tchk, eml.getText())
-    self.assertXmlEqual(hchk, eml.getHtml())
+    #self.assertMultiLineEqual(eml.manager.sender.emails[0]['message'], etchk)
+    #self.assertMultiLineEqual(eml.getText(), tchk)
+    self.assertXmlEqual(eml.getHtml(), hchk)
 
   #----------------------------------------------------------------------------
   def test_email_rawSmtp(self):
@@ -526,8 +526,8 @@ Content-ID: <smiley.png>
     eml.boundary = 'genemail.test'
     eml['message'] = 'This and that'
     eml.send()
-    self.assertEqual(schk, eml.getSubject())
-    self.assertXmlEqual(hchk, eml.getHtml())
+    self.assertEqual(eml.getSubject(), schk)
+    self.assertXmlEqual(eml.getHtml(), hchk)
     self.assertMimeXmlEqual(eml.manager.sender.emails[0]['message'], chk)
 
   #----------------------------------------------------------------------------
@@ -541,20 +541,22 @@ Content-ID: <smiley.png>
     eml1.setHeader('Message-ID', '<1234567890@genemail.example.com>')
     eml1.includeComponents = ['text']
     eml1.send()
-    self.assertEqual(1, len(eml1.manager.sender.emails))
+    self.assertEqual(len(eml1.manager.sender.emails), 1)
     out1 = eml1.manager.sender.emails[-1]
-    self.assertEqual(sorted(['test@example.com', 'foo1@example.com', 'bcc@example.com']),
-                     sorted(out1['recipients']))
+    self.assertEqual(
+      sorted(out1['recipients']),
+      sorted(['test@example.com', 'foo1@example.com', 'bcc@example.com']))
     eml2 = man.newEmail()
     eml2.setHeader('To', 'test@example.com')
     eml2.setHeader('From', 'noreply@example.com')
     eml2.setHeader('Message-ID', '<2234567890@genemail.example.com>')
     eml2.includeComponents = ['text']
     eml2.send()
-    self.assertEqual(2, len(eml2.manager.sender.emails))
+    self.assertEqual(len(eml2.manager.sender.emails), 2)
     out2 = eml2.manager.sender.emails[-1]
-    self.assertEqual(sorted(['test@example.com', 'foo1@example.com']),
-                     sorted(out2['recipients']))
+    self.assertEqual(
+      sorted(out2['recipients']),
+      sorted(['test@example.com', 'foo1@example.com']))
 
   #----------------------------------------------------------------------------
   def test_bccHeader(self):
@@ -583,11 +585,13 @@ Content-ID: <smiley.png>
     eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
     eml.boundary = 'genemail.test'
     eml.send()
-    self.assertEqual(1, len(sender.emails))
+    self.assertEqual(len(sender.emails), 1)
     out = sender.emails[0]
-    self.assertEqual(sorted(['mailfrom', 'recipients', 'message']), sorted(out.keys()))
-    self.assertEqual('mailfrom@example.com', out['mailfrom'])
-    self.assertEqual(sorted(['rcpt@example.com', 'bcc@example.com']), sorted(out['recipients']))
+    self.assertEqual(sorted(out.keys()), sorted(['mailfrom', 'recipients', 'message']))
+    self.assertEqual(out['mailfrom'], 'mailfrom@example.com')
+    self.assertEqual(
+      sorted(out['recipients']),
+      sorted(['rcpt@example.com', 'bcc@example.com']))
 
     # ensure that the 'bcc' headers is stripped out of the output
     chk = '''\
@@ -654,9 +658,9 @@ Content-Transfer-Encoding: 7bit
     eml.send()
     self.assertEqual(1, len(manager.sender.emails))
     out = manager.sender.emails[0]
-    self.assertEqual(sorted(['mailfrom', 'recipients', 'message']), sorted(out.keys()))
-    self.assertEqual('mailfrom@example.com', out['mailfrom'])
-    self.assertEqual(sorted(['rcpt@example.com', 'bcc@example.com']), sorted(out['recipients']))
+    self.assertEqual(sorted(out.keys()), sorted(['mailfrom', 'recipients', 'message']))
+    self.assertEqual(out['mailfrom'], 'mailfrom@example.com')
+    self.assertEqual(sorted(out['recipients']), sorted(['rcpt@example.com', 'bcc@example.com']))
     chk = '''\
 Content-Type: multipart/mixed; boundary="==genemail.test-mix-1=="
 MIME-Version: 1.0
@@ -730,9 +734,11 @@ Content-Transfer-Encoding: 7bit
     eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
     eml.includeComponents = ['text']
     eml.send()
-    self.assertEqual(1, len(sender.emails))
+    self.assertEqual(len(sender.emails), 1)
     out = sender.emails[0]
-    self.assertEqual(sorted(['rcpt@example.com', 'bcc@example.com']), sorted(out['recipients']))
+    self.assertEqual(
+      sorted(out['recipients']),
+      sorted(['rcpt@example.com', 'bcc@example.com']))
 
   # TODO: test non-CID attachments...
   # TODO: test CID-cleansing...
@@ -796,7 +802,7 @@ settings:
     eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
     eml.boundary = 'genemail.test'
     eml.send()
-    self.assertEqual(1, len(manager.sender.emails))
+    self.assertEqual(len(manager.sender.emails), 1)
     out = manager.sender.emails[0]
     chk = '''\
 Content-Type: multipart/alternative; boundary="==genemail.test-alt-2=="
@@ -853,7 +859,7 @@ ALL YOUR BASE ARE BELONG TO US
   </body>
 </html>
 '''
-    self.assertXmlEqual(chk, eml.getHtml(standalone=True))
+    self.assertXmlEqual(eml.getHtml(standalone=True), chk)
 
   #----------------------------------------------------------------------------
   def test_spec_override(self):
@@ -865,8 +871,8 @@ ALL YOUR BASE ARE BELONG TO US
       # modifier = genemail.DkimModifier(
       #   selector = 'selector._domainkey.example.com',
       #   key      = '/path/to/private-rsa.key',
-      #   )
-      )
+      # )
+    )
     eml = manager.newEmail('invite')
     eml['name'] = 'Joe Schmoe'
     eml['email'] = 'test@example.com'
@@ -887,7 +893,7 @@ END:VCALENDAR
     eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
     eml.boundary = 'genemail.test'
     eml.send()
-    self.assertEqual(1, len(manager.sender.emails))
+    self.assertEqual(len(manager.sender.emails), 1)
     out = manager.sender.emails[0]
     chk = '''\
 Content-Type: multipart/mixed; boundary="==genemail.test-mix-1=="
@@ -1004,7 +1010,7 @@ END:VCALENDAR
     eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
     eml.includeComponents = ['text']
     eml.send()
-    self.assertEqual(1, len(sender.emails))
+    self.assertEqual(len(sender.emails), 1)
     out = sender.emails[0]
     self.assertEqual(out.recipients, ['rcpt@example.com'])
     self.assertEqual(out.mailfrom, 'mailfrom@example.com')
@@ -1028,7 +1034,7 @@ END:VCALENDAR
       sender   = sender,
       provider = template(tpl),
       default  = {'headers': {'from': 'mailfrom@example.com'}},
-      )
+    )
     eml = manager.newEmail()
     eml['message'] = 'test'
     # override the UNpredictable generated info...
@@ -1036,7 +1042,7 @@ END:VCALENDAR
     eml.setHeader('message-id', '<1234567890@@genemail.example.com>')
     eml.includeComponents = ['text']
     eml.send()
-    self.assertEqual(1, len(sender.emails))
+    self.assertEqual(len(sender.emails), 1)
     out = sender.emails[0]
     self.assertEqual(out.recipients, ['rcpt@example.com'])
     self.assertEqual(out.mailfrom, 'mailfrom@example.com')
@@ -1060,7 +1066,7 @@ END:VCALENDAR
       sender   = sender,
       provider = template(tpl),
       default  = {'headers': {'frOM': 'mailfrom@example.com'}},
-      )
+    )
     eml = manager.newEmail()
     eml['message'] = 'test'
     # override the UNpredictable generated info...
