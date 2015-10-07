@@ -26,14 +26,13 @@ test_dependencies = [
 ]
 
 dependencies = [
-  'distribute           >= 0.6.24',
-  'TemplateAlchemy      >= 0.1.20',
+  'TemplateAlchemy      >= 0.1.21',
   'cssutils             >= 0.9.10b1',
   'cssselect            >= 0.7.1',
   'py-dom-xpath         >= 0.1',
   'html2text            >= 3.200.3',
-  'globre               >= 0.0.5',
-  'asset                >= 0.0.4',
+  'globre               >= 0.1.3',
+  'asset                >= 0.6.3',
 ]
 
 extras_dependencies = {
