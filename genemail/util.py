@@ -21,12 +21,18 @@ htmlns = 'http://www.w3.org/1999/xhtml'
 #------------------------------------------------------------------------------
 # email regex from:
 #   http://www.regular-expressions.info/email.html
-# and extended to support "...@localhost"
+# and extended to:
+#   - support "...@localhost"
+#   - support TLDs up to 63 characters
+#   - support internationalized domains using punycode
+#       TODO: people should be able to enter their non-punycode version...
+emailRegex_cre = re.compile(
+  '\\b[a-z0-9._%+-]+@(?:(?:[a-z0-9-]+\\.)+(?:xn--)?[a-z]{2,63}|localhost)\\b',
+  re.IGNORECASE)
 def extractEmails(s):
   if not s:
     return None
-  emailRegex = '\\b[A-Z0-9._%+-]+@(?:(?:[A-Z0-9-]+\\.)+[A-Z]{2,4}|localhost)\\b'
-  return re.findall(emailRegex, s, re.I)
+  return emailRegex_cre.findall(s)
 
 #------------------------------------------------------------------------------
 def getHtmlStyleView(document, css, media='all', name=None,
