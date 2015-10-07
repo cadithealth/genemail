@@ -3,6 +3,13 @@ ChangeLog
 =========
 
 
+v0.1.14
+=======
+
+* Removed `distribute` dependency
+* Improved email regex and made it globally pre-compiled
+
+
 v0.1.13
 =======
 
