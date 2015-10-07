@@ -1,3 +1,9 @@
+* make `genemail.util.emailRegex_cre` configurable
+
+* genemail failed to correctly extract only one email address from this:
+
+    To: "Donna Cotarella@aol.com" <donnacostrella@aol.com>
+
 * preserve XML-based comments in output html... "if in the input, put in the output"
   ==> make optional!
   ==> maybe add special syntax for having both be possible?, eg:
